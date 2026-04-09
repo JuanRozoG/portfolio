@@ -1,0 +1,12 @@
+{
+  "menuLinks": [
+    { "pageId": "people",      "label": "People",   "visible": true,  "order": 1 },
+    { "pageId": "things",      "label": "Things",   "visible": true,  "order": 2 },
+    { "pageId": "personal-v2", "label": "Personal", "visible": true,  "order": 3 },
+    { "pageId": "info",        "label": "Info",     "visible": true,  "order": 4 }
+  ],
+  "footerLinks": [
+    { "label": "@babyjuanmoretime", "url": "https://instagram.com/babyjuanmoretime", "visible": true },
+    { "label": "@rozo.life",        "url": "https://instagram.com/rozo.life",        "visible": true }
+  ]
+}

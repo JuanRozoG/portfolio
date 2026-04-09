@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Juan Rozo — Archive: Intro v1</title>
+  <link rel="icon" type="image/png" href="https://juanrozo.com/wp-content/uploads/2024/05/Artboard-2.png" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@900&display=swap');
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --font-display: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+      --fw: 900;
+      --color-red: #ff3232;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; padding: 0;
+      background: #fff;
+      overflow: hidden;
+      font-family: var(--font-display);
+      font-weight: var(--fw);
+      -webkit-font-smoothing: antialiased;
+      color: #0a0a0a;
+    }
+
+    .archive-back    { display: none; }
+    .archive-version { display: none; }
+
+    /* Global header — logo top-left */
+    .site-logo {
+      position: fixed;
+      top: 14px; left: 24px;
+      z-index: 200;
+      font-family: var(--font-display); font-weight: 900;
+      font-size: 23px; letter-spacing: -0.92px; line-height: 48px;
+      text-transform: uppercase; color: #0a0a0a;
+      text-decoration: none; cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+    .site-logo:hover { opacity: 0.5; }
+    body.menu-open .site-logo { opacity: 0; pointer-events: none; }
+    @media (max-width: 768px) {
+      .site-logo { top: max(12px, env(safe-area-inset-top, 12px)); left: 16px; }
+    }
+
+    /* Intro v1 layout */
+    .v1-intro {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Name animation */
+    .v1-name {
+      font-family: var(--font-display);
+      font-size: clamp(48px, 12vw, 120px);
+      font-weight: 900;
+      letter-spacing: -5.76px;
+      line-height: 0.71;
+      text-transform: uppercase;
+      text-align: center;
+      color: #0a0a0a;
+      margin: 0;
+      z-index: 5;
+      transition: color 0.2s;
+      cursor: default;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    .v1-name.revealed {
+      opacity: 1;
+      transform: translateY(0);
+      transition: color 0.2s, opacity 0.8s ease, transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .v1-name:hover { color: var(--color-red); }
+
+    /* Tagline animation */
+    .v1-tagline {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.48px;
+      color: #0a0a0a;
+      margin-top: 12px;
+      text-align: center;
+      z-index: 5;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    .v1-tagline.revealed {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.7s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Thumbnail strip */
+    .v1-thumbs {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      /* Fixed height defines the baseline strip. Images that grow taller than
+         this strip overflow upward and are shown fully — no clipping. */
+      height: 15vh;
+      overflow: visible;
+      z-index: 4;
+    }
+    .v1-thumb {
+      flex: 1 1 0%;
+      min-width: 0;
+      overflow: visible;
+      height: 100%;           /* fill the fixed 15vh strip */
+      position: relative;     /* contain the absolutely-positioned image */
+      opacity: 0;
+      transform: translateY(40px);
+      /* flex-grow animates the expand; opacity+transform run the entrance once */
+      transition: flex-grow 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.8s ease,
+                  transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .v1-thumb.revealed {
+      opacity: 1;
+      transform: translateY(0);
+      transition: flex-grow 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.8s ease,
+                  transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    /* Once the entrance animation has played, lock opacity + transform out of
+       the transition so hover interactions can never re-trigger them. */
+    .v1-thumb.settled {
+      transition: flex-grow 0.65s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    }
+    .v1-thumb img {
+      /* Absolute positioning anchored to bottom of thumb.
+         width: 100% always fills the full thumb width — no side white space
+         regardless of aspect ratio or how much the thumb expands.
+         height: auto preserves natural aspect ratio without distortion.
+         Overflow at the top is clipped by the thumb's overflow: hidden. */
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       MENU BUTTON + SLIDE-UP OVERLAY — matches main site design
+       ══════════════════════════════════════════════════════════════ */
+    .menu-btn {
+      position: fixed;
+      top: 14px; right: 24px; left: auto;
+      z-index: 200;
+      background: none; border: none; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-weight: 900;
+      font-size: 48px; line-height: 1;
+      color: #ff3232;
+      cursor: pointer;
+      transition: opacity 0.4s cubic-bezier(0.25, 0.1, 0.25, 1),
+                  transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .menu-btn:hover { transform: scale(1.1); }
+    .menu-btn.hidden { opacity: 0; pointer-events: none; transform: scale(0.85); }
+
+    .menu-overlay {
+      position: fixed; inset: 0; z-index: 300; background: #000000;
+      transform: translateY(calc(100% + 80px));
+      transition: transform 0.7s cubic-bezier(0.16,1,0.3,1);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .menu-overlay.open { transform: translateY(0); }
+
+    @keyframes menuItemIn  { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes menuCloseIn { from { opacity: 0; transform: rotate(45deg) scale(0.8); } to { opacity: 1; transform: rotate(45deg) scale(1); } }
+
+    .menu-overlay .menu-name,
+    .menu-overlay .menu-close,
+    .menu-overlay .menu-link,
+    .menu-overlay .menu-footer { opacity: 0; }
+
+    .menu-overlay.open .menu-name  { animation: menuItemIn  0.40s 0.20s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-close { animation: menuCloseIn 0.40s 0.22s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(1)  { animation: menuItemIn 0.52s 0.28s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(2)  { animation: menuItemIn 0.52s 0.36s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(3)  { animation: menuItemIn 0.52s 0.44s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(4)  { animation: menuItemIn 0.52s 0.52s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(5)  { animation: menuItemIn 0.52s 0.60s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(6)  { animation: menuItemIn 0.52s 0.68s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(7)  { animation: menuItemIn 0.52s 0.76s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(8)  { animation: menuItemIn 0.52s 0.84s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(9)  { animation: menuItemIn 0.52s 0.92s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(10) { animation: menuItemIn 0.52s 1.00s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-footer             { animation: menuItemIn 0.40s 1.08s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+    .menu-overlay.open.menu-ready .menu-name,
+    .menu-overlay.open.menu-ready .menu-close,
+    .menu-overlay.open.menu-ready .menu-link,
+    .menu-overlay.open.menu-ready .menu-footer { animation: none; opacity: 1; transform: translateY(0); }
+    .menu-overlay.open.menu-ready .menu-close  { transform: rotate(45deg) scale(1); }
+
+    .menu-close {
+      position: absolute; top: 14px; right: 24px;
+      background: none; border: none; padding: 0; z-index: 302;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-weight: 900;
+      font-size: 48px; line-height: 48px; color: #ffffff;
+      transform: rotate(45deg); cursor: pointer; transition: opacity 0.3s ease;
+    }
+    .menu-close:hover { opacity: 0.4; }
+
+    .menu-name {
+      position: absolute; top: 14px; left: 24px; z-index: 302;
+      font-family: var(--font-display); font-weight: 900;
+      font-size: 23px; letter-spacing: -0.92px; line-height: 48px;
+      text-transform: uppercase; color: #ffffff; text-decoration: none;
+      transition: opacity 0.5s cubic-bezier(0.25,0.1,0.25,1);
+    }
+    .menu-name:hover { opacity: 0.4; }
+
+    .menu-nav {
+      display: flex; flex-direction: row; flex-wrap: wrap;
+      align-items: flex-start; align-content: center;
+      gap: 0 clamp(20px, 3.5vw, 56px);
+      padding: 76px 40px 76px 40px;
+      flex: 1; z-index: 301; overflow: hidden;
+    }
+    .menu-link {
+      display: flex; flex-direction: column; align-items: flex-start;
+      text-decoration: none; color: #ffffff;
+      cursor: pointer; transition: opacity 0.5s cubic-bezier(0.25,0.1,0.25,1);
+      pointer-events: none;
+    }
+    .menu-overlay.menu-ready .menu-link { pointer-events: auto; }
+    .menu-link-lbl {
+      font-family: var(--font-display); font-weight: 900;
+      font-size: clamp(30px, 5.5vw, 88px); letter-spacing: -0.03em;
+      line-height: 1; white-space: nowrap;
+    }
+    .menu-nav.has-hover .menu-link:not(.hovered) { opacity: 0.07; }
+    .menu-overlay.has-item-hover .menu-name { opacity: 0.07; transition: opacity 0.5s cubic-bezier(0.25,0.1,0.25,1); }
+
+    .menu-preview {
+      position: absolute; top: 76px; right: clamp(40px, 7vw, 100px);
+      width: clamp(160px, 22vw, 300px); aspect-ratio: 2/3;
+      object-fit: cover; object-position: center top;
+      opacity: 0; pointer-events: none; z-index: 300;
+      transition: opacity 0.55s cubic-bezier(0.25,0.1,0.25,1),
+                  transform 0.55s cubic-bezier(0.16,1,0.3,1);
+      transform: scale(0.97) translateY(8px);
+    }
+    .menu-preview.visible { opacity: 1; transform: scale(1) translateY(0); }
+
+    .menu-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 40px; border-top: 1px solid rgba(255,255,255,0.08);
+      flex-shrink: 0; transition: opacity 0.5s cubic-bezier(0.25,0.1,0.25,1); z-index: 302;
+    }
+    .menu-overlay.has-item-hover .menu-footer { opacity: 0.07; }
+    .menu-footer-left {
+      font-family: var(--font-display); font-weight: 900;
+      font-size: 23px; letter-spacing: -0.92px; color: rgba(255,255,255,0.65);
+    }
+    .menu-footer-right { display: flex; gap: 20px; }
+    .menu-footer-link {
+      font-family: var(--font-display); font-weight: 900;
+      font-size: 23px; letter-spacing: -0.92px; color: #ffffff;
+      text-decoration: none; cursor: pointer; transition: opacity 0.3s ease;
+    }
+    .menu-footer-link:hover { opacity: 0.4; }
+    @media (max-width: 900px) {
+      .menu-preview { display: none; }
+      .menu-nav { padding: 76px 24px 76px 24px; gap: 0 clamp(16px, 3vw, 32px); align-content: center; }
+      .menu-link-lbl { font-size: clamp(26px, 4.5vw, 64px); }
+      .menu-footer { padding: 16px 24px; }
+    }
+    @media (max-width: 600px) {
+      .menu-btn  { top: max(12px, env(safe-area-inset-top, 12px)); right: 16px; }
+      .menu-name { top: max(12px, env(safe-area-inset-top, 12px)); left: 16px; }
+      .menu-nav { padding: 72px 20px 72px 20px; gap: 0 clamp(12px, 5vw, 24px); overflow-y: auto; align-content: center; }
+      .menu-link-lbl { font-size: clamp(20px, 9vw, 40px); white-space: normal; }
+      .menu-nav.has-hover .menu-link:not(.hovered) { opacity: 1 !important; }
+      .menu-overlay.has-item-hover .menu-name,
+      .menu-overlay.has-item-hover .menu-footer { opacity: 1 !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ── GLOBAL HEADER — logo top-left, menu icon top-right ──── -->
+  <a href="/" class="site-logo" id="site-logo" aria-label="Home">Juan Rozo</a>
+  <button class="menu-btn" id="menu-btn" aria-label="Menu">+</button>
+
+  <!-- ── SLIDE-UP MENU ──────────────────────────────────────────── -->
+  <div class="menu-overlay" id="menu-overlay">
+    <a href="/" class="menu-name" id="menu-name"></a>
+    <nav class="menu-nav" id="menu-nav"></nav>
+    <div class="menu-footer" id="menu-footer"></div>
+    <button class="menu-close" id="menu-close" aria-label="Close menu">+</button>
+  </div>
+
+  <a href="archive.html" class="archive-back">&larr; Back to Archive</a>
+  <span class="archive-version">Intro v1</span>
+
+  <div class="v1-intro">
+    <h1 class="v1-name" id="v1-name"></h1>
+    <p class="v1-tagline" id="v1-tagline">Melbourne based. Photographer &amp; Art-director. EST 2020</p>
+    <div class="v1-thumbs" id="v1-thumbs"></div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    document.getElementById('v1-name').textContent = CONFIG.name;
+
+    const thumbsWrap = document.getElementById('v1-thumbs');
+    const introPeople   = (CONFIG.pageGalleries?.people          || []).slice(0, 5);
+    const introThings   = (CONFIG.pageGalleries?.things          || []).slice(0, 4);
+    const introPersonal = (CONFIG.pageGalleries?.['personal-v2'] || []).slice(0, 4);
+    const introProjects = [];
+    const maxLen = Math.max(introPeople.length, introThings.length, introPersonal.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (i < introPeople.length)   introProjects.push(introPeople[i]);
+      if (i < introThings.length)   introProjects.push(introThings[i]);
+      if (i < introPersonal.length) introProjects.push(introPersonal[i]);
+    }
+    introProjects.forEach(proj => {
+      const div = document.createElement('div');
+      div.className = 'v1-thumb';
+      div.innerHTML = `<img src="${proj.image}?auto=format&w=200&q=75" alt="${proj.title}" loading="lazy" />`;
+      thumbsWrap.appendChild(div);
+    });
+
+    // ── Hover expand — hovered thumb grows to 2× each sibling via flex-grow ──
+    // NOTE: Chrome ignores inline flex-basis overrides when the class uses
+    // the flex shorthand (cascade quirk). flex-grow inline works correctly.
+    // flex-grow: 2 on hovered → gets 2× the flex space. Others stay at 1.
+    (function initThumbExpand() {
+      const allThumbs = Array.from(thumbsWrap.querySelectorAll('.v1-thumb'));
+      let currentHovered = null;
+      let currentImg     = null;  // tracks img element whose overflow we're listening to
+
+      // Container geometry — cached for cursor slot detection.
+      // Slots are fixed equal divisions of container width, immune to the
+      // animated flex layout so pointermove detection stays stable.
+      let containerLeft = null;
+      let slotW         = null;
+
+      function cacheGeometry() {
+        const rect    = thumbsWrap.getBoundingClientRect();
+        containerLeft = rect.left;
+        slotW         = rect.width / allThumbs.length;
+      }
+
+      window.addEventListener('resize', () => { containerLeft = null; slotW = null; });
+
+      function thumbAtX(clientX) {
+        if (containerLeft === null) cacheGeometry();
+        const idx = Math.max(0, Math.min(
+          Math.floor((clientX - containerLeft) / slotW),
+          allThumbs.length - 1
+        ));
+        return allThumbs[idx];
+      }
+
+      // When cursor leaves an image's overflow area into something outside
+      // the strip, reset. If it re-enters the strip, pointermove takes over.
+      function onImgPointerLeave(e) {
+        const rel = e.relatedTarget;
+        if (rel && (rel === thumbsWrap || thumbsWrap.contains(rel))) return;
+        resetWidths();
+      }
+
+      function setWidths(hoveredThumb) {
+        allThumbs.forEach(t => {
+          t.style.flexGrow = t === hoveredThumb ? '2' : '1';
+        });
+        // Attach pointerleave to the image so cursor entering the overflow
+        // region above the strip doesn't lose tracking.
+        if (currentImg) currentImg.removeEventListener('pointerleave', onImgPointerLeave);
+        currentImg = hoveredThumb.querySelector('img');
+        if (currentImg) currentImg.addEventListener('pointerleave', onImgPointerLeave);
+      }
+
+      function resetWidths() {
+        currentHovered = null;
+        if (currentImg) {
+          currentImg.removeEventListener('pointerleave', onImgPointerLeave);
+          currentImg = null;
+        }
+        // Clear inline flex-grow → CSS flex:1 1 0% takes over (equal distribution)
+        allThumbs.forEach(t => { t.style.flexGrow = ''; });
+      }
+
+      // pointermove: fires only on real cursor movement, never on layout shifts.
+      thumbsWrap.addEventListener('pointermove', e => {
+        const thumb = thumbAtX(e.clientX);
+        if (thumb !== currentHovered) {
+          currentHovered = thumb;
+          setWidths(thumb);
+        }
+      });
+
+      // Only reset when cursor truly leaves the strip (not into an image overflow).
+      thumbsWrap.addEventListener('pointerleave', e => {
+        const rel = e.relatedTarget;
+        if (rel && thumbsWrap.contains(rel)) return;
+        resetWidths();
+      });
+    })();
+
+    // ── Staggered entrance animations ──────────────────────
+    // Name appears first
+    setTimeout(() => {
+      document.getElementById('v1-name').classList.add('revealed');
+    }, 300);
+
+    // Tagline follows
+    setTimeout(() => {
+      document.getElementById('v1-tagline').classList.add('revealed');
+    }, 600);
+
+    // Thumbnails stagger in from left to right.
+    // After the entrance transition finishes (transform: 1s), add .settled to
+    // remove opacity + transform from the transition — they can never replay on hover.
+    const thumbs = document.querySelectorAll('.v1-thumb');
+    thumbs.forEach((thumb, i) => {
+      const delay = 800 + i * 80 + (Math.random() * 60 - 30);
+      setTimeout(() => {
+        thumb.classList.add('revealed');
+        setTimeout(() => thumb.classList.add('settled'), 1050);
+      }, delay);
+    });
+
+    // ── Menu ──────────────────────────────────────────────────────────
+    (function initMenu() {
+      const menuOverlay = document.getElementById('menu-overlay');
+      const menuBtn     = document.getElementById('menu-btn');
+      const menuClose   = document.getElementById('menu-close');
+      const menuNavEl   = document.getElementById('menu-nav');
+      let menuOpen = false;
+      let menuCurrentLink = null;
+
+      const nameEl = document.getElementById('menu-name');
+      if (nameEl && typeof CONFIG !== 'undefined') nameEl.textContent = CONFIG.name || 'Juan Rozo';
+
+      const footerEl = document.getElementById('menu-footer');
+      if (footerEl && typeof CONFIG !== 'undefined') {
+        const insta1    = CONFIG.instagram || '';
+        const insta1Url = CONFIG.instagramUrl || '#';
+        const insta2    = CONFIG.pageContent?.info?.instagram2Label || '';
+        const insta2Url = CONFIG.pageContent?.info?.instagram2Url   || '#';
+        footerEl.innerHTML =
+          '<span class="menu-footer-left">Melbourne</span>' +
+          '<div class="menu-footer-right">' +
+            (insta2 ? '<a href="' + insta2Url + '" target="_blank" rel="noopener" class="menu-footer-link">' + insta2 + '</a>' : '') +
+            (insta1 ? '<a href="' + insta1Url + '" target="_blank" rel="noopener" class="menu-footer-link">' + insta1 + '</a>' : '') +
+          '</div>';
+      }
+
+      // Build preview image element
+      let previewEl = menuOverlay.querySelector('.menu-preview');
+      if (!previewEl) {
+        previewEl = document.createElement('img');
+        previewEl.className = 'menu-preview';
+        previewEl.alt = '';
+        previewEl.setAttribute('aria-hidden', 'true');
+        menuOverlay.appendChild(previewEl);
+      }
+
+      if (typeof CONFIG !== 'undefined' && CONFIG.menuPages) {
+        CONFIG.menuPages.forEach((pg) => {
+          const a = document.createElement('a');
+          a.href = '#';
+          a.className = 'menu-link';
+          a.dataset.page = pg.id;
+          a.dataset.template = pg.template;
+          a.dataset.slug = pg.slug;
+          a.innerHTML = '<span class="menu-link-lbl">' + pg.menuLabel + '</span>';
+          menuNavEl.appendChild(a);
+        });
+      }
+
+      function openMenu() {
+        menuOpen = true;
+        menuOverlay.classList.remove('menu-ready');
+        menuOverlay.classList.add('open');
+        menuBtn.classList.add('hidden');
+        document.body.classList.add('menu-open');
+        setTimeout(() => { if (menuOpen) menuOverlay.classList.add('menu-ready'); }, 1600);
+      }
+      function closeMenu() {
+        menuOpen = false;
+        menuOverlay.classList.remove('open', 'menu-ready');
+        menuBtn.classList.remove('hidden');
+        document.body.classList.remove('menu-open');
+      }
+
+      menuBtn.addEventListener('click', openMenu);
+      menuClose.addEventListener('click', closeMenu);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && menuOpen) closeMenu(); });
+
+      var previewTimer = null;
+      menuNavEl.querySelectorAll('.menu-link').forEach(function(link) {
+        link.addEventListener('mouseenter', function() {
+          if (menuCurrentLink && menuCurrentLink !== link) menuCurrentLink.classList.remove('hovered');
+          link.classList.add('hovered');
+          menuCurrentLink = link;
+          menuNavEl.classList.add('has-hover');
+          menuOverlay.classList.add('has-item-hover');
+          // Preview image
+          if (previewEl) {
+            var pageId  = link.dataset.page;
+            var ownGallery = (typeof CONFIG !== 'undefined' && CONFIG.pageGalleries && CONFIG.pageGalleries[pageId]) || [];
+            var gallery = ownGallery.length > 0 ? ownGallery
+              : ((typeof CONFIG !== 'undefined' && (CONFIG.pageGalleries && (CONFIG.pageGalleries['people'] || CONFIG.pageGalleries['intro']))) || []);
+            clearTimeout(previewTimer);
+            if (gallery.length > 0) {
+              var imgUrl = (gallery[0].image || gallery[0].url || '');
+              if (imgUrl) {
+                if (previewEl.getAttribute('data-current') !== imgUrl) {
+                  previewEl.classList.remove('visible');
+                  previewTimer = setTimeout(function() {
+                    previewEl.src = imgUrl;
+                    previewEl.setAttribute('data-current', imgUrl);
+                    void previewEl.offsetHeight;
+                    previewEl.classList.add('visible');
+                  }, 30);
+                } else {
+                  previewEl.classList.add('visible');
+                }
+              } else {
+                previewEl.classList.remove('visible');
+              }
+            } else {
+              previewEl.classList.remove('visible');
+            }
+          }
+        });
+        link.addEventListener('mouseleave', function() {
+          link.classList.remove('hovered');
+          if (menuCurrentLink === link) menuCurrentLink = null;
+          setTimeout(function() {
+            if (!menuCurrentLink) {
+              menuNavEl.classList.remove('has-hover');
+              menuOverlay.classList.remove('has-item-hover');
+              if (previewEl) { clearTimeout(previewTimer); previewEl.classList.remove('visible'); }
+            }
+          }, 50);
+        });
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var tpl  = link.dataset.template;
+          var slug = link.dataset.slug;
+          var id   = link.dataset.page;
+          closeMenu();
+          setTimeout(function() {
+            if (tpl === 'archive-standalone' || tpl === 'filmstrip') {
+              window.location.href = '/' + slug + '.html';
+            } else {
+              window.location.href = '/#' + id;
+            }
+          }, 120);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

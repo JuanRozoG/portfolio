@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Juan Rozo — Archive: Personal v1</title>
+  <link rel="icon" type="image/png" href="https://juanrozo.com/wp-content/uploads/2024/05/Artboard-2.png" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@900&display=swap');
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --font-display: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+      --fw: 900;
+      --color-red: #ff3232;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; padding: 0;
+      background: #fff;
+      overflow: hidden;
+      font-family: var(--font-display);
+      font-weight: var(--fw);
+      -webkit-font-smoothing: antialiased;
+      color: #0a0a0a;
+    }
+
+    .archive-back    { display: none; }
+    .archive-version { display: none; }
+
+    /* Global header — logo top-left */
+    .site-logo {
+      position: fixed;
+      top: 14px; left: 24px;
+      z-index: 200;
+      font-family: var(--font-display); font-weight: 900;
+      font-size: 23px; letter-spacing: -0.92px; line-height: 48px;
+      text-transform: uppercase; color: #0a0a0a;
+      text-decoration: none; cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+    .site-logo:hover { opacity: 0.5; }
+    body.menu-open .site-logo { opacity: 0; pointer-events: none; }
+    @media (max-width: 768px) {
+      .site-logo { top: max(12px, env(safe-area-inset-top, 12px)); left: 16px; }
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Personal v1 layout */
+    .v1-personal {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100%;
+    }
+    .v1-personal-title-bar {
+      padding: 60px 24px 14px;
+      flex-shrink: 0;
+    }
+    .v1-personal-title-bar h2 {
+      font-family: var(--font-display);
+      font-size: 23px;
+      font-weight: 900;
+      letter-spacing: -0.92px;
+      text-transform: uppercase;
+      color: #0a0a0a;
+      margin: 0;
+      opacity: 0;
+      animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+    }
+    .v1-personal-scroll {
+      flex: 1;
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0 24px;
+      align-items: center;   /* vertically centre the fixed-height items */
+      cursor: grab;
+      scrollbar-width: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .v1-personal-scroll:active { cursor: grabbing; }
+    .v1-personal-scroll::-webkit-scrollbar { display: none; }
+
+    /* Each item is sized by its natural aspect ratio at 50vh — no cropping */
+    .v1-personal-item {
+      flex: 0 0 auto;
+      height: 50vh;
+      width: auto;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    .v1-personal-item.revealed {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.8s ease, transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .v1-personal-item img {
+      height: 100%;
+      width: auto;
+      display: block;
+      pointer-events: none;
+    }
+
+    /* Thumbnail nav — spans full page width */
+    .v1-personal-thumbs {
+      flex-shrink: 0;
+      display: flex;
+      gap: 4px;
+      padding: 0 0 12px;
+      overflow: hidden;
+      scrollbar-width: none;
+      opacity: 0;
+      animation: slideUp 0.6s ease 1.2s forwards;
+    }
+    .v1-personal-thumbs::-webkit-scrollbar { display: none; }
+    .v1-personal-thumb {
+      flex: 1 1 0%;
+      min-width: 0;
+      height: 48px;
+      overflow: hidden;
+      opacity: 0.4;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.3s;
+    }
+    .v1-personal-thumb:hover,
+    .v1-personal-thumb.active { opacity: 1; }
+    .v1-personal-thumb:hover { transform: scale(1.1); }
+    .v1-personal-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       MENU BUTTON + SLIDE-UP OVERLAY — matches main site design
+       ══════════════════════════════════════════════════════════════ */
+    .menu-btn {
+      position: fixed;
+      top: 14px; right: 24px; left: auto;
+      z-index: 200;
+      background: none; border: none; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-weight: 900;
+      font-size: 48px; line-height: 1;
+      color: #ff3232;
+      cursor: pointer;
+      transition: opacity 0.4s cubic-bezier(0.25, 0.1, 0.25, 1),
+                  transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .menu-btn:hover { transform: scale(1.1); }
+    .menu-btn.hidden { opacity: 0; pointer-events: none; transform: scale(0.85); }
+
+    .menu-overlay {
+      position: fixed; inset: 0; z-index: 300; background: #000000;
+      transform: translateY(calc(100% + 80px));
+      transition: transform 0.7s cubic-bezier(0.16,1,0.3,1);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .menu-overlay.open { transform: translateY(0); }
+
+    @keyframes menuItemIn  { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes menuCloseIn { from { opacity: 0; transform: rotate(45deg) scale(0.8); } to { opacity: 1; transform: rotate(45deg) scale(1); } }
+
+    .menu-overlay .menu-name,
+    .menu-overlay .menu-close,
+    .menu-overlay .menu-link,
+    .menu-overlay .menu-footer { opacity: 0; }
+
+    .menu-overlay.open .menu-name  { animation: menuItemIn  0.40s 0.20s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-close { animation: menuCloseIn 0.40s 0.22s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(1)  { animation: menuItemIn 0.52s 0.28s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(2)  { animation: menuItemIn 0.52s 0.36s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(3)  { animation: menuItemIn 0.52s 0.44s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(4)  { animation: menuItemIn 0.52s 0.52s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(5)  { animation: menuItemIn 0.52s 0.60s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(6)  { animation: menuItemIn 0.52s 0.68s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(7)  { animation: menuItemIn 0.52s 0.76s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(8)  { animation: menuItemIn 0.52s 0.84s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(9)  { animation: menuItemIn 0.52s 0.92s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-link:nth-child(10) { animation: menuItemIn 0.52s 1.00s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .menu-overlay.open .menu-footer             { animation: menuItemIn 0.40s 1.08s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+    .menu-overlay.open.menu-ready .menu-name,
+    .menu-overlay.open.menu-ready .menu-close,
+    .menu-overlay.open.menu-ready .menu-link,
+    .menu-overlay.open.menu-ready .menu-footer { animation: none; opacity: 1; transform: translateY(0); }
+    .menu-overlay.open.menu-ready .menu-close  { transform: rotate(45deg) scale(1); }
+
+    .menu-close {
+      position: absolute; top: 14px; right: 24px;
+      background: none; border: none; padding: 0; z-index: 302;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-weight: 900;
+      font-size: 48px; line-height: 48px; color: #ffffff;
+      transform: rotate(45deg); cursor: pointer; transition: opacity 0.3s ease;
+    }
+    .menu-close:hover { opacity: 0.4; }
+
+    .menu-name {
+      position: absolute; top: 14px; left: 24px; z-index: 302;
+      font-family: var(--font-display); font-weight: 900;
+      font-size: 23px; letter-spacing: -0.92px; line-height: 48px;
+      text-transform: uppercase; color: #ffffff; text-decoration: none;
+      transition: opacity 0.5s cubic-bezier(0.25,0.1,0.25,1);
+    }
+    .menu-name:hover { opacity: 0.4; }
+
+    .menu-nav {
+      display: flex; flex-direction: row; flex-wrap: wrap;
+      align-items: flex-start; align-content: center;
+      gap: 0 clamp(20px, 3.5vw, 56px);
+      padding: 76px 40px 76px 40px;
+      flex: 1; z-index: 301; overflow: hidden;
+    }
+    .menu-link {
+      display: flex; flex-direction: column; align-items: flex-start;
+      text-decoration: none; color: #ffffff;
+      cursor: pointer; transition: opacity 0.5s cubic-bezier(0.25,0.1,0.25,1);
+      pointer-events: none;
+    }
+    .menu-overlay.menu-ready .menu-link { pointer-events: auto; }
+    .menu-link-lbl {
+      font-family: var(--font-display); font-weight: 900;
+      font-size: clamp(30px, 5.5vw, 88px); letter-spacing: -0.03em;
+      line-height: 1; white-space: nowrap;
+    }
+    .menu-nav.has-hover .menu-link:not(.hovered) { opacity: 0.07; }
+    .menu-overlay.has-item-hover .menu-name { opacity: 0.07; transition: opacity 0.5s cubic-bezier(0.25,0.1,0.25,1); }
+
+    .menu-preview {
+      position: absolute; top: 76px; right: clamp(40px, 7vw, 100px);
+      width: clamp(160px, 22vw, 300px); aspect-ratio: 2/3;
+      object-fit: cover; object-position: center top;
+      opacity: 0; pointer-events: none; z-index: 300;
+      transition: opacity 0.55s cubic-bezier(0.25,0.1,0.25,1),
+                  transform 0.55s cubic-bezier(0.16,1,0.3,1);
+      transform: scale(0.97) translateY(8px);
+    }
+    .menu-preview.visible { opacity: 1; transform: scale(1) translateY(0); }
+
+    .menu-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 40px; border-top: 1px solid rgba(255,255,255,0.08);
+      flex-shrink: 0; transition: opacity 0.5s cubic-bezier(0.25,0.1,0.25,1); z-index: 302;
+    }
+    .menu-overlay.has-item-hover .menu-footer { opacity: 0.07; }
+    .menu-footer-left {
+      font-family: var(--font-display); font-weight: 900;
+      font-size: 23px; letter-spacing: -0.92px; color: rgba(255,255,255,0.65);
+    }
+    .menu-footer-right { display: flex; gap: 20px; }
+    .menu-footer-link {
+      font-family: var(--font-display); font-weight: 900;
+      font-size: 23px; letter-spacing: -0.92px; color: #ffffff;
+      text-decoration: none; cursor: pointer; transition: opacity 0.3s ease;
+    }
+    .menu-footer-link:hover { opacity: 0.4; }
+    @media (max-width: 900px) {
+      .menu-preview { display: none; }
+      .menu-nav { padding: 76px 24px 76px 24px; gap: 0 clamp(16px, 3vw, 32px); align-content: center; }
+      .menu-link-lbl { font-size: clamp(26px, 4.5vw, 64px); }
+      .menu-footer { padding: 16px 24px; }
+    }
+    @media (max-width: 600px) {
+      .menu-btn  { top: max(12px, env(safe-area-inset-top, 12px)); right: 16px; }
+      .menu-name { top: max(12px, env(safe-area-inset-top, 12px)); left: 16px; }
+      .menu-nav { padding: 72px 20px 72px 20px; gap: 0 clamp(12px, 5vw, 24px); overflow-y: auto; align-content: center; }
+      .menu-link-lbl { font-size: clamp(20px, 9vw, 40px); white-space: normal; }
+      .menu-nav.has-hover .menu-link:not(.hovered) { opacity: 1 !important; }
+      .menu-overlay.has-item-hover .menu-name,
+      .menu-overlay.has-item-hover .menu-footer { opacity: 1 !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ── GLOBAL HEADER — logo top-left, menu icon top-right ──── -->
+  <a href="/" class="site-logo" id="site-logo" aria-label="Home">Juan Rozo</a>
+  <button class="menu-btn" id="menu-btn" aria-label="Menu">+</button>
+
+  <!-- ── SLIDE-UP MENU ──────────────────────────────────────────── -->
+  <div class="menu-overlay" id="menu-overlay">
+    <a href="/" class="menu-name" id="menu-name"></a>
+    <nav class="menu-nav" id="menu-nav"></nav>
+    <div class="menu-footer" id="menu-footer"></div>
+    <button class="menu-close" id="menu-close" aria-label="Close menu">+</button>
+  </div>
+
+  <a href="archive.html" class="archive-back">&larr; Back to Archive</a>
+  <span class="archive-version">Personal v1</span>
+
+  <div class="v1-personal">
+    <div class="v1-personal-title-bar">
+      <h2 id="v1-personal-name"></h2>
+    </div>
+    <div class="v1-personal-scroll" id="v1-personal-scroll"></div>
+    <div class="v1-personal-thumbs" id="v1-personal-thumbs"></div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    document.getElementById('v1-personal-name').textContent = CONFIG.name;
+
+    const scrollEl = document.getElementById('v1-personal-scroll');
+    const thumbsNav = document.getElementById('v1-personal-thumbs');
+    const personalItems = CONFIG.pageGalleries?.['personal-v2'] || [];
+
+    personalItems.forEach((proj, idx) => {
+      // Main image
+      const div = document.createElement('div');
+      div.className = 'v1-personal-item';
+      div.innerHTML = `<img src="${proj.image}?auto=format&w=600&q=80" alt="${proj.title}" loading="lazy" />`;
+      scrollEl.appendChild(div);
+
+      // Thumbnail nav
+      const thumb = document.createElement('div');
+      thumb.className = 'v1-personal-thumb';
+      thumb.innerHTML = `<img src="${proj.image}?auto=format&w=100&q=60" alt="${proj.title}" />`;
+      thumb.addEventListener('click', () => {
+        div.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      });
+      thumbsNav.appendChild(thumb);
+    });
+
+    // ── Staggered entrance for gallery items ───────────────
+    const items = scrollEl.querySelectorAll('.v1-personal-item');
+    items.forEach((item, i) => {
+      const delay = 500 + i * 100 + (Math.random() * 60 - 30);
+      setTimeout(() => item.classList.add('revealed'), delay);
+    });
+
+    // ── Smooth wheel scroll (both axes → horizontal, with inertia) ───────────
+    (function initWheelScroll() {
+      let vel = 0;
+      let rafId = null;
+
+      function tick() {
+        if (Math.abs(vel) < 0.3) { vel = 0; rafId = null; return; }
+        scrollEl.scrollLeft += vel;
+        vel *= 0.90;
+        rafId = requestAnimationFrame(tick);
+      }
+
+      scrollEl.addEventListener('wheel', e => {
+        e.preventDefault();
+        // honour explicit horizontal scroll (trackpad two-finger); fall back to vertical
+        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        vel += delta * 0.6;
+        if (!rafId) rafId = requestAnimationFrame(tick);
+      }, { passive: false });
+    })();
+
+    // ── Drag-to-scroll (document-level so fast drags don't break) ────────────
+    (function initDragScroll() {
+      const el = scrollEl;
+      let isDown = false;
+      let startX, scrollLeft0, velX = 0, lastX, lastTime, rafId;
+
+      el.addEventListener('mousedown', e => {
+        isDown = true;
+        el.style.cursor = 'grabbing';
+        startX    = e.clientX;
+        scrollLeft0 = el.scrollLeft;
+        velX      = 0;
+        lastX     = e.clientX;
+        lastTime  = Date.now();
+        cancelAnimationFrame(rafId);
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup',   onUp);
+      });
+
+      function onMove(e) {
+        if (!isDown) return;
+        e.preventDefault();
+        const dx = e.clientX - startX;
+        el.scrollLeft = scrollLeft0 - dx;
+
+        const now = Date.now();
+        const dt  = now - lastTime;
+        if (dt > 0) {
+          velX     = (e.clientX - lastX) / dt;
+          lastX    = e.clientX;
+          lastTime = now;
+        }
+      }
+
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup',   onUp);
+        if (!isDown) return;
+        isDown = false;
+        el.style.cursor = 'grab';
+        momentum();
+      }
+
+      function momentum() {
+        if (Math.abs(velX) < 0.01) return;
+        el.scrollLeft -= velX * 16;
+        velX *= 0.94;
+        rafId = requestAnimationFrame(momentum);
+      }
+    })();
+
+    // ── Highlight active thumbnail on scroll ─────────────────
+    (function initThumbHighlight() {
+      const items = scrollEl.querySelectorAll('.v1-personal-item');
+      const thumbs = thumbsNav.querySelectorAll('.v1-personal-thumb');
+
+      scrollEl.addEventListener('scroll', () => {
+        const scrollCenter = scrollEl.scrollLeft + scrollEl.clientWidth / 2;
+        let closest = 0, minDist = Infinity;
+        items.forEach((item, i) => {
+          const center = item.offsetLeft + item.offsetWidth / 2;
+          const dist = Math.abs(center - scrollCenter);
+          if (dist < minDist) { minDist = dist; closest = i; }
+        });
+        thumbs.forEach((t, i) => t.classList.toggle('active', i === closest));
+      });
+    })();
+
+    // ── Menu ──────────────────────────────────────────────────────────
+    (function initMenu() {
+      const menuOverlay = document.getElementById('menu-overlay');
+      const menuBtn     = document.getElementById('menu-btn');
+      const menuClose   = document.getElementById('menu-close');
+      const menuNavEl   = document.getElementById('menu-nav');
+      let menuOpen = false;
+      let menuCurrentLink = null;
+
+      const nameEl = document.getElementById('menu-name');
+      if (nameEl && typeof CONFIG !== 'undefined') nameEl.textContent = CONFIG.name || 'Juan Rozo';
+
+      const footerEl = document.getElementById('menu-footer');
+      if (footerEl && typeof CONFIG !== 'undefined') {
+        const insta1    = CONFIG.instagram || '';
+        const insta1Url = CONFIG.instagramUrl || '#';
+        const insta2    = CONFIG.pageContent?.info?.instagram2Label || '';
+        const insta2Url = CONFIG.pageContent?.info?.instagram2Url   || '#';
+        footerEl.innerHTML =
+          '<span class="menu-footer-left">Melbourne</span>' +
+          '<div class="menu-footer-right">' +
+            (insta2 ? '<a href="' + insta2Url + '" target="_blank" rel="noopener" class="menu-footer-link">' + insta2 + '</a>' : '') +
+            (insta1 ? '<a href="' + insta1Url + '" target="_blank" rel="noopener" class="menu-footer-link">' + insta1 + '</a>' : '') +
+          '</div>';
+      }
+
+      // Build preview image element
+      let previewEl = menuOverlay.querySelector('.menu-preview');
+      if (!previewEl) {
+        previewEl = document.createElement('img');
+        previewEl.className = 'menu-preview';
+        previewEl.alt = '';
+        previewEl.setAttribute('aria-hidden', 'true');
+        menuOverlay.appendChild(previewEl);
+      }
+
+      if (typeof CONFIG !== 'undefined' && CONFIG.menuPages) {
+        CONFIG.menuPages.forEach((pg) => {
+          const a = document.createElement('a');
+          a.href = '#';
+          a.className = 'menu-link';
+          a.dataset.page = pg.id;
+          a.dataset.template = pg.template;
+          a.dataset.slug = pg.slug;
+          a.innerHTML = '<span class="menu-link-lbl">' + pg.menuLabel + '</span>';
+          menuNavEl.appendChild(a);
+        });
+      }
+
+      function openMenu() {
+        menuOpen = true;
+        menuOverlay.classList.remove('menu-ready');
+        menuOverlay.classList.add('open');
+        menuBtn.classList.add('hidden');
+        document.body.classList.add('menu-open');
+        setTimeout(() => { if (menuOpen) menuOverlay.classList.add('menu-ready'); }, 1600);
+      }
+      function closeMenu() {
+        menuOpen = false;
+        menuOverlay.classList.remove('open', 'menu-ready');
+        menuBtn.classList.remove('hidden');
+        document.body.classList.remove('menu-open');
+      }
+
+      menuBtn.addEventListener('click', openMenu);
+      menuClose.addEventListener('click', closeMenu);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && menuOpen) closeMenu(); });
+
+      var previewTimer = null;
+      menuNavEl.querySelectorAll('.menu-link').forEach(function(link) {
+        link.addEventListener('mouseenter', function() {
+          if (menuCurrentLink && menuCurrentLink !== link) menuCurrentLink.classList.remove('hovered');
+          link.classList.add('hovered');
+          menuCurrentLink = link;
+          menuNavEl.classList.add('has-hover');
+          menuOverlay.classList.add('has-item-hover');
+          if (previewEl) {
+            var pageId  = link.dataset.page;
+            var ownGallery = (typeof CONFIG !== 'undefined' && CONFIG.pageGalleries && CONFIG.pageGalleries[pageId]) || [];
+            var gallery = ownGallery.length > 0 ? ownGallery
+              : ((typeof CONFIG !== 'undefined' && (CONFIG.pageGalleries && (CONFIG.pageGalleries['people'] || CONFIG.pageGalleries['intro']))) || []);
+            clearTimeout(previewTimer);
+            if (gallery.length > 0) {
+              var imgUrl = (gallery[0].image || gallery[0].url || '');
+              if (imgUrl) {
+                if (previewEl.getAttribute('data-current') !== imgUrl) {
+                  previewEl.classList.remove('visible');
+                  previewTimer = setTimeout(function() {
+                    previewEl.src = imgUrl;
+                    previewEl.setAttribute('data-current', imgUrl);
+                    void previewEl.offsetHeight;
+                    previewEl.classList.add('visible');
+                  }, 30);
+                } else {
+                  previewEl.classList.add('visible');
+                }
+              } else {
+                previewEl.classList.remove('visible');
+              }
+            } else {
+              previewEl.classList.remove('visible');
+            }
+          }
+        });
+        link.addEventListener('mouseleave', function() {
+          link.classList.remove('hovered');
+          if (menuCurrentLink === link) menuCurrentLink = null;
+          setTimeout(function() {
+            if (!menuCurrentLink) {
+              menuNavEl.classList.remove('has-hover');
+              menuOverlay.classList.remove('has-item-hover');
+              if (previewEl) { clearTimeout(previewTimer); previewEl.classList.remove('visible'); }
+            }
+          }, 50);
+        });
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var tpl  = link.dataset.template;
+          var slug = link.dataset.slug;
+          var id   = link.dataset.page;
+          closeMenu();
+          setTimeout(function() {
+            if (tpl === 'archive-standalone' || tpl === 'filmstrip') {
+              window.location.href = '/' + slug + '.html';
+            } else {
+              window.location.href = '/#' + id;
+            }
+          }, 120);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

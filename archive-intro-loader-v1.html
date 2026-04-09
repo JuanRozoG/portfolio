@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Juan Rozo</title>
+  <meta name="description" content="Juan Rozo — Photographer & Art-director. Melbourne based." />
+  <link rel="icon" type="image/png" href="https://juanrozo.com/wp-content/uploads/2024/05/Artboard-2.png" />
+  <link rel="stylesheet" href="style.css?v=6" />
+</head>
+<body class="page-intro">
+
+  <!-- Custom cursor -->
+  <div class="cursor" id="cursor"><span>View</span></div>
+
+  <!-- ── GLOBAL HEADER — logo top-left, menu icon top-right ─── -->
+  <a href="#" class="site-logo" id="site-logo" aria-label="Home">Juan Rozo</a>
+  <button class="menu-btn" id="menu-btn" aria-label="Menu">+</button>
+
+  <!-- ── SLIDE-UP MENU ──────────────────────────────────────── -->
+  <div class="menu-overlay" id="menu-overlay">
+    <a href="#" class="menu-name" id="menu-name">Juan Rozo</a>
+    <nav class="menu-nav" id="menu-nav">
+      <!-- populated by buildMenuNav() from CONFIG.menuPages -->
+    </nav>
+    <div class="menu-footer" id="menu-footer">
+      <!-- populated by buildMenuFooter() from CONFIG -->
+    </div>
+    <button class="menu-close" id="menu-close" aria-label="Close menu">+</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       INTRO PAGE
+       ══════════════════════════════════════════════════════════ -->
+  <section class="page page-section active" id="page-intro">
+    <div class="intro-collage" id="intro-collage"></div>
+    <div class="intro-center">
+      <h1 class="intro-name" id="intro-name"></h1>
+      <p class="intro-tagline" id="intro-tagline"></p>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       PEOPLE PAGE
+       ══════════════════════════════════════════════════════════ -->
+  <section class="page page-section page-carousel-section" id="page-people">
+    <div class="page-title-bar">
+      <h2 class="page-title"><a href="#" class="page-title-link" data-page="intro">Juan Rozo</a></h2>
+    </div>
+    <div class="carousel-container" id="carousel-people">
+      <div class="carousel-track" id="carousel-track"></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       THINGS PAGE
+       ══════════════════════════════════════════════════════════ -->
+  <section class="page page-section page-grid-section" id="page-things">
+    <div class="page-title-bar">
+      <h2 class="page-title"><a href="#" class="page-title-link" data-page="intro">Juan Rozo</a></h2>
+    </div>
+    <div class="portfolio-grid" id="grid-things"></div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       PERSONAL PAGE
+       ══════════════════════════════════════════════════════════ -->
+  <section class="page page-section page-personal-section" id="page-personal">
+    <div class="page-title-bar personal-title-bar">
+      <h2 class="page-title"><a href="#" class="page-title-link" data-page="intro">Juan Rozo</a></h2>
+    </div>
+    <div class="portfolio-grid horizontal-scroll" id="grid-personal"></div>
+    <div class="personal-thumbs" id="personal-thumbs"></div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       PERSONAL V2 — CAROUSEL
+       ══════════════════════════════════════════════════════════ -->
+  <section class="page page-section page-personal-v2-section" id="page-personal-v2" style="height:100vh;min-height:100vh;max-height:100vh;overflow:hidden;position:relative;padding-top:0;">
+    <div class="page-title-bar personal-v2-title-bar" style="position:absolute;top:0;left:0;right:0;z-index:20;opacity:1;animation:none;transform:none;">
+      <h2 class="page-title"><a href="#" class="page-title-link" data-page="intro">Juan Rozo</a></h2>
+    </div>
+    <div class="personal-v2-carousel" id="personal-v2-carousel"></div>
+    <div class="personal-v2-counter" id="personal-v2-counter"></div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       INFO PAGE
+       ══════════════════════════════════════════════════════════ -->
+  <section class="page page-section" id="page-info"></section>
+
+  <!-- ── FOOTER ──────────────────────────────────────────────── -->
+  <footer class="site-footer" id="site-footer"></footer>
+
+  <!-- ── LIGHTBOX (slides up from bottom) ──────────────────── -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+    <div class="lightbox-top">
+      <span class="lb-counter" id="lb-counter"></span>
+      <button class="lightbox-close" id="lb-close" aria-label="Close">&times;</button>
+    </div>
+    <button class="lightbox-nav lightbox-prev" id="lb-prev" aria-label="Previous">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 4l-8 8 8 8"/></svg>
+    </button>
+    <div class="lightbox-inner">
+      <img class="lightbox-img" id="lb-img" src="" alt="" />
+    </div>
+    <button class="lightbox-nav lightbox-next" id="lb-next" aria-label="Next">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 4l8 8-8 8"/></svg>
+    </button>
+    <div class="lightbox-bottom">
+      <p class="lightbox-title" id="lb-title"></p>
+      <p class="lightbox-subtitle" id="lb-subtitle"></p>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+  (() => {
+    'use strict';
+
+    /* ════════════════════════════════════════════════════════
+       SETUP — populate from config
+       ════════════════════════════════════════════════════════ */
+
+    // Global logo — click navigates to home
+    const logoEl = document.getElementById('site-logo');
+    if (logoEl) {
+      logoEl.addEventListener('click', e => {
+        e.preventDefault();
+        const _homeId = (typeof CONFIG !== 'undefined' && CONFIG.homePage) || 'intro';
+        navigateTo(_homeId);
+      });
+    }
+
+    // Intro
+    document.getElementById('intro-name').textContent = CONFIG.name;
+    document.getElementById('intro-tagline').textContent =
+      `Melbourne based. ${CONFIG.tagline}. EST 2020`;
+
+    // Intro collage — balanced random mix from People / Things / Personal
+    const collageContainer = document.getElementById('intro-collage');
+
+    // Helper: pick N random items from an array
+    function pickRandom(arr, n) {
+      const shuffled = [...arr];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled.slice(0, n);
+    }
+
+    const allPeople = CONFIG.pageGalleries?.people || [];
+    const allThings = CONFIG.pageGalleries?.things || [];
+    const allPersonal = CONFIG.pageGalleries?.['personal-v2'] || [];
+
+    // Pick 3 random from each category for balanced distribution
+    const collageImages = [
+      ...pickRandom(allPeople, 3),
+      ...pickRandom(allThings, 3),
+      ...pickRandom(allPersonal, 3),
+    ];
+
+    // Shuffle the combined set
+    for (let i = collageImages.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [collageImages[i], collageImages[j]] = [collageImages[j], collageImages[i]];
+    }
+
+    // ── Organic collage layout engine ────────────────────────
+    // Places 9 images in irregular positions using iterative relaxation.
+    // Avoids center text zone and prevents all overlaps.
+    // Uses natural image aspect ratios to prevent cropping.
+    function generateOrganicPositions(naturalRatios) {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      // Center exclusion zone (name + tagline)
+      const cx = vw * 0.5, cy = vh * 0.5;
+      const exHalfW = vw * 0.20, exHalfH = vh * 0.12;
+
+      // Image sizes as fraction of vw — varied for organic feel
+      const widths = [0.15, 0.17, 0.11, 0.13, 0.09, 0.14, 0.16, 0.10, 0.12];
+      // Shuffle sizes
+      for (let i = widths.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [widths[i], widths[j]] = [widths[j], widths[i]];
+      }
+
+      // 9 anchor zones — deliberately irregular, spread across viewport
+      const anchors = [
+        { x: 0.02,  y: 0.03 },   // top-left
+        { x: 0.82,  y: 0.02 },   // top-right
+        { x: 0.22,  y: 0.05 },   // top center-left
+        { x: 0.02,  y: 0.42 },   // mid-left
+        { x: 0.70,  y: 0.34 },   // mid-right
+        { x: 0.02,  y: 0.76 },   // bottom-left
+        { x: 0.82,  y: 0.70 },   // bottom-right
+        { x: 0.34,  y: 0.78 },   // bottom center-left
+        { x: 0.56,  y: 0.76 },   // bottom center-right
+      ];
+
+      const gap = Math.max(8, vw * 0.012);
+      const margin = vw * 0.01;
+
+      // Use natural aspect ratios (height/width) from preloaded images
+      const ars = naturalRatios;
+
+      // Initialize images at their anchors with jitter
+      const imgs = anchors.map((a, i) => {
+        const w = widths[i] * vw;
+        const h = w * ars[i];
+        const jx = (Math.random() - 0.5) * vw * 0.04;
+        const jy = (Math.random() - 0.5) * vh * 0.04;
+        return {
+          x: a.x * vw + jx,
+          y: a.y * vh + jy,
+          w, h,
+          anchorX: a.x * vw,
+          anchorY: a.y * vh,
+          wFrac: widths[i],
+        };
+      });
+
+      // Clamp helper
+      function clampImg(img) {
+        img.x = Math.max(margin, Math.min(vw - img.w - margin, img.x));
+        img.y = Math.max(margin, Math.min(vh - img.h - margin, img.y));
+      }
+      imgs.forEach(clampImg);
+
+      // Iterative relaxation — 120 passes, decreasing anchor pull
+      for (let pass = 0; pass < 120; pass++) {
+        const t = pass / 120; // 0→1 progress
+        for (let i = 0; i < imgs.length; i++) {
+          const a = imgs[i];
+          let fx = 0, fy = 0;
+
+          // 1. Repel from center exclusion zone
+          const acx = a.x + a.w / 2, acy = a.y + a.h / 2;
+          const dx_c = acx - cx, dy_c = acy - cy;
+          const overX = (exHalfW + a.w / 2 + gap) - Math.abs(dx_c);
+          const overY = (exHalfH + a.h / 2 + gap) - Math.abs(dy_c);
+          if (overX > 0 && overY > 0) {
+            fx += (dx_c >= 0 ? overX : -overX) * 0.7;
+            fy += (dy_c >= 0 ? overY : -overY) * 0.7;
+          }
+
+          // 2. Repel from other images (strong force)
+          for (let j = 0; j < imgs.length; j++) {
+            if (i === j) continue;
+            const b = imgs[j];
+            const dx = (a.x + a.w / 2) - (b.x + b.w / 2);
+            const dy = (a.y + a.h / 2) - (b.y + b.h / 2);
+            const ox = (a.w / 2 + b.w / 2 + gap) - Math.abs(dx);
+            const oy = (a.h / 2 + b.h / 2 + gap) - Math.abs(dy);
+            if (ox > 0 && oy > 0) {
+              // Push along both axes, proportional to overlap
+              const force = 0.65;
+              fx += (dx >= 0 ? ox : -ox) * force;
+              fy += (dy >= 0 ? oy : -oy) * force;
+            }
+          }
+
+          // 3. Anchor pull — strong early, weak late (let repulsion win)
+          const anchorPull = 0.04 * (1 - t * 0.8);
+          fx += (a.anchorX - a.x) * anchorPull;
+          fy += (a.anchorY - a.y) * anchorPull;
+
+          a.x += fx;
+          a.y += fy;
+          clampImg(a);
+        }
+      }
+
+      // Final safety pass — brute-force fix any remaining overlaps
+      for (let safety = 0; safety < 50; safety++) {
+        let clean = true;
+        for (let i = 0; i < imgs.length; i++) {
+          for (let j = i + 1; j < imgs.length; j++) {
+            const a = imgs[i], b = imgs[j];
+            const ox = (a.w / 2 + b.w / 2 + gap) - Math.abs((a.x + a.w / 2) - (b.x + b.w / 2));
+            const oy = (a.h / 2 + b.h / 2 + gap) - Math.abs((a.y + a.h / 2) - (b.y + b.h / 2));
+            if (ox > 0 && oy > 0) {
+              clean = false;
+              const dx = (a.x + a.w / 2) - (b.x + b.w / 2);
+              const dy = (a.y + a.h / 2) - (b.y + b.h / 2);
+              // Push both apart equally along the axis of least overlap
+              if (ox < oy) {
+                const push = (ox / 2) + 1;
+                a.x += dx >= 0 ? push : -push;
+                b.x += dx >= 0 ? -push : push;
+              } else {
+                const push = (oy / 2) + 1;
+                a.y += dy >= 0 ? push : -push;
+                b.y += dy >= 0 ? -push : push;
+              }
+              clampImg(a);
+              clampImg(b);
+            }
+          }
+        }
+        if (clean) break;
+      }
+
+      return imgs.map(img => ({
+        left: (img.x / vw * 100).toFixed(2) + '%',
+        top: (img.y / vh * 100).toFixed(2) + '%',
+        width: (img.wFrac * 100).toFixed(1) + 'vw',
+        height: (img.h / vh * 100).toFixed(2) + 'vh',
+      }));
+    }
+
+    // Preload images to get natural aspect ratios, then layout
+    function preloadCollageImages(projects) {
+      return Promise.all(projects.slice(0, 9).map(proj => {
+        return new Promise(resolve => {
+          const img = new Image();
+          img.onload = () => resolve({ proj, ratio: img.naturalHeight / img.naturalWidth });
+          img.onerror = () => resolve({ proj, ratio: 1.33 }); // fallback 3:4
+          img.src = proj.image + '?auto=format&w=500&q=80';
+        });
+      }));
+    }
+
+    preloadCollageImages(collageImages).then(results => {
+      const naturalRatios = results.map(r => r.ratio);
+      const organicPositions = generateOrganicPositions(naturalRatios);
+
+      results.forEach(({ proj }, i) => {
+        const div = document.createElement('div');
+        div.className = 'intro-collage-img';
+        const pos = organicPositions[i];
+        div.style.left = pos.left;
+        div.style.top = pos.top;
+        div.style.width = pos.width;
+        div.style.height = pos.height;
+        div.innerHTML = `<img src="${proj.image}?auto=format&w=500&q=80" alt="${proj.title}" loading="eager" />`;
+        collageContainer.appendChild(div);
+      });
+
+      // Trigger intro animation after images are placed
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => runIntroLoader());
+      });
+    });
+
+    // Hover interaction — blur others when hovering a photo
+    collageContainer.addEventListener('mouseover', (e) => {
+      const img = e.target.closest('.intro-collage-img');
+      if (img) {
+        collageContainer.classList.add('has-hover');
+        collageContainer.querySelectorAll('.intro-collage-img').forEach(el => el.classList.remove('collage-hovered'));
+        img.classList.add('collage-hovered');
+      }
+    });
+    collageContainer.addEventListener('mouseout', (e) => {
+      const img = e.target.closest('.intro-collage-img');
+      if (img && !collageContainer.contains(e.relatedTarget?.closest?.('.intro-collage-img'))) {
+        collageContainer.classList.remove('has-hover');
+        img.classList.remove('collage-hovered');
+      }
+    });
+    collageContainer.addEventListener('mouseleave', () => {
+      collageContainer.classList.remove('has-hover');
+      collageContainer.querySelectorAll('.collage-hovered').forEach(el => el.classList.remove('collage-hovered'));
+    });
+
+    // Hover on name — blur all photos
+    const introName = document.getElementById('intro-name');
+    introName.addEventListener('mouseenter', () => {
+      collageContainer.classList.add('has-hover');
+      // No image gets 'collage-hovered' — so ALL blur
+    });
+    introName.addEventListener('mouseleave', () => {
+      collageContainer.classList.remove('has-hover');
+    });
+
+    // Footer
+    document.getElementById('site-footer').innerHTML = `
+      <div class="footer-cta-section">
+        <p class="footer-label">Got a project?</p>
+        <h2 class="footer-cta">Let's work<br>together.</h2>
+        <div class="footer-contact">
+          <a href="mailto:${CONFIG.email}" class="footer-email">${CONFIG.email}</a>
+          <a href="${CONFIG.instagramUrl}" target="_blank" rel="noopener" class="footer-social">${CONFIG.instagram}</a>
+        </div>
+      </div>
+      ${CONFIG.clientLogos && CONFIG.clientLogos.length ? `
+      <div class="footer-clients">
+        <p class="footer-clients-label">Selected clients</p>
+        <div class="footer-logos">
+          ${CONFIG.clientLogos.map(l => `<img src="${l.url}" alt="${l.name}" title="${l.name}" loading="lazy" />`).join('')}
+        </div>
+      </div>` : ''}
+      <div class="footer-bottom">
+        <span>${CONFIG.copyright}</span>
+        <a href="#" class="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false">Back to top &uarr;</a>
+      </div>
+    `;
+
+    // Info page
+    document.getElementById('page-info').innerHTML = `
+      <div class="page-title-bar info-title-bar">
+        <h2 class="page-title"><a href="#" class="page-title-link" data-page="intro">${CONFIG.name}</a></h2>
+      </div>
+      <div class="about-inner">
+        <div class="about-img-wrap">
+          <img class="about-photo" src="${CONFIG.about.photo}" alt="${CONFIG.name}" />
+        </div>
+        <div class="about-text">
+          <p class="about-label">About</p>
+          <h1>${CONFIG.name}</h1>
+          <p class="about-role">Melbourne based. ${CONFIG.tagline}.</p>
+          <p class="about-bio">${CONFIG.about.bio}</p>
+          <div class="about-links">
+            <a href="mailto:${CONFIG.email}">${CONFIG.email}</a>
+            <a href="${CONFIG.instagramUrl}" target="_blank" rel="noopener">${CONFIG.instagram}</a>
+            <a href="https://instagram.com/babyjuanmoretime" target="_blank" rel="noopener">@babyjuanmoretime</a>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // ── Intro loader animation ──────────────────────────────
+    function runIntroLoader() {
+      document.body.classList.add('loaded');
+
+      // Stagger reveal collage images after a brief delay
+      const collageImgs = document.querySelectorAll('.intro-collage-img');
+      const delays = [800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400];
+
+      collageImgs.forEach((img, i) => {
+        const delay = delays[i] || (800 + i * 200);
+        // Add slight randomness to feel organic
+        const jitter = Math.random() * 160 - 80;
+        setTimeout(() => {
+          img.classList.add('revealed');
+        }, delay + jitter);
+      });
+    }
+
+
+    // Fallback: ensure loaded class and visibility after max wait
+    setTimeout(() => {
+      if (!document.body.classList.contains('loaded')) {
+        document.body.classList.add('loaded');
+      }
+      // Animation fallback: if intro elements are still invisible after
+      // body.loaded was added, force them visible (some browsers don't fire CSS animations)
+      setTimeout(() => {
+        const name = document.getElementById('intro-name');
+        if (name && getComputedStyle(name).opacity === '0') {
+          document.body.classList.add('no-anim');
+        }
+      }, 300);
+    }, 4000);
+
+    /* ════════════════════════════════════════════════════════
+       PAGE MANAGEMENT
+       ════════════════════════════════════════════════════════ */
+    let currentPage = 'intro';
+    let currentItems = [];
+    let lightboxIndex = 0;
+    let isTransitioning = false;
+
+    // Page configuration
+    const pages = ['intro', 'people', 'things', 'personal', 'personal-v2', 'info'];
+    const gridPages = {};
+    const darkPages = { info: true };
+
+    window._showPage = showPage;
+    function showPage(page) {
+      // Clean up carousels when leaving
+      if (carouselCleanup) { carouselCleanup(); carouselCleanup = null; }
+      if (personalV2Cleanup) { personalV2Cleanup(); personalV2Cleanup = null; }
+
+      // Hide all pages
+      pages.forEach(p => {
+        const el = document.getElementById(`page-${p}`);
+        if (el) el.classList.remove('active');
+      });
+
+      // Remove all page-* body classes
+      pages.forEach(p => document.body.classList.remove(`page-${p}`));
+
+      // Set new page
+      document.body.classList.add(`page-${page}`);
+      const target = document.getElementById(`page-${page}`);
+      if (target) target.classList.add('active');
+
+      // Footer: show on grid pages (people, things), hide on others
+      const footer = document.getElementById('site-footer');
+      if (gridPages[page]) {
+        footer.classList.add('visible');
+      } else {
+        footer.classList.remove('visible');
+      }
+
+      currentPage = page;
+      window.scrollTo({ top: 0 });
+
+      // Render content for each page
+      if (page === 'people') {
+        renderCarousel();
+      } else if (page === 'things') {
+        renderMasonryGrid('things');
+      } else if (page === 'personal') {
+        renderPersonalGrid();
+      } else if (page === 'personal-v2') {
+        renderPersonalCarousel();
+      }
+    }
+
+    /* ════════════════════════════════════════════════════════
+       WIPE TRANSITION
+       ════════════════════════════════════════════════════════ */
+    function navigateTo(targetPage) {
+      if (isTransitioning) return;
+      if (currentPage === targetPage) return;
+
+      isTransitioning = true;
+
+      // Close menu first if open
+      closeMenu();
+
+      const isDark = darkPages[targetPage];
+
+      // Create wipe overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'wipe-overlay';
+      if (isDark) overlay.classList.add('wipe-dark');
+      document.body.appendChild(overlay);
+
+      // Phase 1: slide up to cover
+      requestAnimationFrame(() => {
+        overlay.classList.add('wipe-in');
+
+        let inDone = false;
+        function onInDone() {
+          if (inDone) return;
+          inDone = true;
+          overlay.removeEventListener('animationend', onInDone);
+
+          // Switch content while covered
+          showPage(targetPage);
+
+          // Phase 2: slide away
+          requestAnimationFrame(() => {
+            overlay.classList.remove('wipe-in');
+            overlay.classList.add('wipe-out');
+
+            let outDone = false;
+            function onOutDone() {
+              if (outDone) return;
+              outDone = true;
+              overlay.removeEventListener('animationend', onOutDone);
+              overlay.remove();
+              isTransitioning = false;
+            }
+            overlay.addEventListener('animationend', onOutDone);
+            // Fallback if animationend doesn't fire
+            setTimeout(onOutDone, 650);
+          });
+        }
+        overlay.addEventListener('animationend', onInDone);
+        // Fallback if animationend doesn't fire
+        setTimeout(onInDone, 650);
+      });
+    }
+
+    /* ════════════════════════════════════════════════════════
+       CAROUSEL (People)
+       ════════════════════════════════════════════════════════ */
+    let carouselIdx = 0;
+    let carouselCleanup = null;
+
+    function renderCarousel() {
+      const track = document.getElementById('carousel-track');
+      if (!track) return;
+
+      // Clean up previous
+      if (carouselCleanup) { carouselCleanup(); carouselCleanup = null; }
+      track.innerHTML = '';
+      carouselIdx = 0;
+
+      const items = CONFIG.pageGalleries?.people || [];
+      currentItems = items;
+
+      items.forEach((proj, idx) => {
+        const slide = document.createElement('div');
+        slide.className = 'carousel-slide';
+        if (idx === 0) slide.classList.add('active');
+        slide.innerHTML = `
+          <div class="portfolio-item-img-wrap">
+            <img src="${proj.image}?auto=format&w=1200&q=90"
+                 alt="${proj.title}" loading="${idx < 3 ? 'eager' : 'lazy'}" />
+          </div>
+        `;
+        slide.dataset.idx = idx;
+        track.appendChild(slide);
+      });
+
+      function updateCarousel() {
+        const slides = track.querySelectorAll('.carousel-slide');
+        if (!slides.length) return;
+        const vw = window.innerWidth / 100;
+        const slideEffective = 39 * vw;
+        const marginL = -8 * vw;
+        const slideW = 55 * vw;
+        const slideCenter = marginL + (slideW / 2) + (carouselIdx * slideEffective);
+        const containerW = track.parentElement.clientWidth || window.innerWidth;
+        const offset = (containerW / 2) - slideCenter;
+        track.style.transform = `translateX(${offset}px)`;
+        slides.forEach((s, i) => s.classList.toggle('active', i === carouselIdx));
+      }
+
+      function goToSlide(idx) {
+        carouselIdx = Math.max(0, Math.min(idx, items.length - 1));
+        updateCarousel();
+      }
+
+      // Resize
+      window.addEventListener('resize', updateCarousel);
+
+      // Click: active opens lightbox, others navigate
+      track.querySelectorAll('.carousel-slide').forEach((slide, i) => {
+        slide.addEventListener('click', () => {
+          if (i === carouselIdx) openLightbox(i, items);
+          else goToSlide(i);
+        });
+      });
+
+      // Keyboard
+      const keyHandler = (e) => {
+        if (document.getElementById('lightbox').classList.contains('open')) return;
+        if (e.key === 'ArrowRight') goToSlide(carouselIdx + 1);
+        if (e.key === 'ArrowLeft') goToSlide(carouselIdx - 1);
+      };
+      document.addEventListener('keydown', keyHandler);
+
+      // Wheel (debounced)
+      let wheelLock = false;
+      const wheelHandler = (e) => {
+        if (document.getElementById('lightbox').classList.contains('open')) return;
+        if (wheelLock) { e.preventDefault(); return; }
+        if (Math.abs(e.deltaY) > 10) {
+          e.preventDefault();
+          wheelLock = true;
+          goToSlide(carouselIdx + (e.deltaY > 0 ? 1 : -1));
+          setTimeout(() => { wheelLock = false; }, 700);
+        }
+      };
+      document.addEventListener('wheel', wheelHandler, { passive: false });
+
+      // Lock body scroll
+      document.body.style.overflow = 'hidden';
+      window.scrollTo({ top: 0 });
+
+      // Cleanup
+      carouselCleanup = () => {
+        document.removeEventListener('keydown', keyHandler);
+        document.removeEventListener('wheel', wheelHandler);
+        window.removeEventListener('resize', updateCarousel);
+        document.body.style.overflow = '';
+      };
+
+      updateCarousel();
+      setTimeout(() => updateCarousel(), 50);
+      reattachCursorEvents();
+    }
+
+    /* ════════════════════════════════════════════════════════
+       MASONRY GRID (Things)
+       ════════════════════════════════════════════════════════ */
+    function renderMasonryGrid(category) {
+      const gridId = `grid-${category}`;
+      const grid = document.getElementById(gridId);
+      if (!grid) return;
+
+      grid.innerHTML = '';
+      const items = CONFIG.pageGalleries?.[category] || [];
+      currentItems = items;
+
+      const colCount = window.innerWidth <= 768 ? 2 : 3;
+      const columns = [];
+      for (let i = 0; i < colCount; i++) {
+        const col = document.createElement('div');
+        col.className = 'portfolio-column';
+        columns.push(col);
+        grid.appendChild(col);
+      }
+
+      items.forEach((proj, idx) => {
+        const div = document.createElement('div');
+        div.className = 'portfolio-item';
+        div.setAttribute('tabindex', '0');
+        div.setAttribute('role', 'button');
+        div.setAttribute('aria-label', proj.title);
+        div.innerHTML = `
+          <div class="portfolio-item-img-wrap">
+            <img src="${proj.image}?auto=format&w=700&q=85"
+                 alt="${proj.title}" loading="${idx < 6 ? 'eager' : 'lazy'}" />
+          </div>
+        `;
+        div.addEventListener('click', () => openLightbox(idx, items));
+        div.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') openLightbox(idx, items);
+        });
+
+        // Round-robin: (idx + 1) % 3 puts extras in middle column
+        const colIdx = colCount === 3 ? ((idx + 1) % colCount) : (idx % colCount);
+        columns[colIdx].appendChild(div);
+      });
+
+      requestAnimationFrame(() => animateItems(grid));
+      reattachCursorEvents();
+    }
+
+    /* ════════════════════════════════════════════════════════
+       PERSONAL HORIZONTAL SCROLL
+       ════════════════════════════════════════════════════════ */
+    function renderPersonalGrid() {
+      const grid = document.getElementById('grid-personal');
+      if (!grid) return;
+
+      // Clean up previous
+      if (grid._dragCleanup) grid._dragCleanup();
+      grid.scrollLeft = 0;
+      grid.innerHTML = '';
+
+      const items = CONFIG.pageGalleries?.['personal-v2'] || [];
+      currentItems = items;
+
+      items.forEach((proj, idx) => {
+        const div = document.createElement('div');
+        div.className = 'portfolio-item';
+        div.setAttribute('tabindex', '0');
+        div.innerHTML = `
+          <div class="portfolio-item-img-wrap">
+            <img src="${proj.image}?auto=format&w=1200&q=85"
+                 alt="${proj.title}" loading="${idx < 4 ? 'eager' : 'lazy'}" />
+          </div>
+        `;
+        div.addEventListener('click', (e) => {
+          if (grid._didDrag) { grid._didDrag = false; return; }
+          openLightbox(idx, items);
+        });
+        grid.appendChild(div);
+      });
+
+      // Thumbnail navigation strip
+      const personalThumbs = document.getElementById('personal-thumbs');
+      personalThumbs.innerHTML = '';
+      personalThumbs.style.display = 'flex';
+      const portfolioItems = grid.querySelectorAll('.portfolio-item');
+
+      items.forEach((proj, idx) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'personal-thumb';
+        thumb.innerHTML = `<img src="${proj.image}?auto=format&w=200&q=75" alt="${proj.title}" />`;
+        thumb.addEventListener('click', () => {
+          const target = portfolioItems[idx];
+          if (target) {
+            const targetLeft = target.offsetLeft;
+            const targetW = target.offsetWidth;
+            const gridW = grid.clientWidth;
+            const scrollTo = targetLeft - (gridW / 2) + (targetW / 2);
+            smoothScrollTo(grid, scrollTo, 800);
+          }
+        });
+        personalThumbs.appendChild(thumb);
+      });
+
+      // Highlight active thumb on scroll
+      let scrollRAF;
+      grid.addEventListener('scroll', () => {
+        if (scrollRAF) cancelAnimationFrame(scrollRAF);
+        scrollRAF = requestAnimationFrame(() => {
+          const gridLeft = grid.getBoundingClientRect().left;
+          const gridCenter = gridLeft + grid.clientWidth / 2;
+          let closestIdx = 0;
+          let closestDist = Infinity;
+          portfolioItems.forEach((item, i) => {
+            const rect = item.getBoundingClientRect();
+            const itemCenter = rect.left + rect.width / 2;
+            const dist = Math.abs(itemCenter - gridCenter);
+            if (dist < closestDist) { closestDist = dist; closestIdx = i; }
+          });
+          personalThumbs.querySelectorAll('.personal-thumb').forEach((t, i) => {
+            t.classList.toggle('active', i === closestIdx);
+          });
+        });
+      });
+
+      initDragScroll(grid);
+      requestAnimationFrame(() => { grid.scrollLeft = 0; });
+      // For horizontal scroll, make items visible immediately (no vertical IntersectionObserver)
+      grid.querySelectorAll('.portfolio-item').forEach(el => el.classList.add('visible'));
+      reattachCursorEvents();
+    }
+
+    /* ── Smooth scroll with easeInOutCubic ──────────────── */
+    function smoothScrollTo(el, targetLeft, duration) {
+      const start = el.scrollLeft;
+      const distance = Math.max(0, Math.min(targetLeft, el.scrollWidth - el.clientWidth)) - start;
+      const startTime = performance.now();
+      function ease(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+      function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        el.scrollLeft = start + distance * ease(progress);
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    /* ── Drag-to-scroll for horizontal galleries ──────── */
+    function initDragScroll(el) {
+      if (el._dragCleanup) el._dragCleanup();
+
+      let isDown = false, startX, scrollLeft;
+      el._didDrag = false;
+
+      const onMouseDown = e => {
+        isDown = true;
+        el._didDrag = false;
+        startX = e.pageX - el.offsetLeft;
+        scrollLeft = el.scrollLeft;
+      };
+      const onMouseLeave = () => { isDown = false; };
+      const onMouseUp = () => { isDown = false; };
+      const onMouseMove = e => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - el.offsetLeft;
+        const walk = (x - startX) * 1.5;
+        if (Math.abs(walk) > 5) el._didDrag = true;
+        el.scrollLeft = scrollLeft - walk;
+      };
+      // Smooth wheel scroll
+      let wheelTarget = null;
+      let wheelRAF = null;
+      const onWheel = e => {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          if (wheelTarget === null) wheelTarget = el.scrollLeft;
+          wheelTarget += e.deltaY * 1.2;
+          wheelTarget = Math.max(0, Math.min(wheelTarget, el.scrollWidth - el.clientWidth));
+          if (!wheelRAF) {
+            const lerp = () => {
+              const diff = wheelTarget - el.scrollLeft;
+              if (Math.abs(diff) < 0.5) {
+                el.scrollLeft = wheelTarget;
+                wheelRAF = null;
+                wheelTarget = null;
+                return;
+              }
+              el.scrollLeft += diff * 0.08;
+              wheelRAF = requestAnimationFrame(lerp);
+            };
+            wheelRAF = requestAnimationFrame(lerp);
+          }
+        }
+      };
+
+      el.addEventListener('mousedown', onMouseDown);
+      el.addEventListener('mouseleave', onMouseLeave);
+      el.addEventListener('mouseup', onMouseUp);
+      el.addEventListener('mousemove', onMouseMove);
+      el.addEventListener('wheel', onWheel, { passive: false });
+
+      el._dragCleanup = () => {
+        el.removeEventListener('mousedown', onMouseDown);
+        el.removeEventListener('mouseleave', onMouseLeave);
+        el.removeEventListener('mouseup', onMouseUp);
+        el.removeEventListener('mousemove', onMouseMove);
+        el.removeEventListener('wheel', onWheel);
+        el._dragCleanup = null;
+      };
+    }
+
+    /* ════════════════════════════════════════════════════════
+       PERSONAL V2 — TRANSFORM-BASED CAROUSEL
+       ════════════════════════════════════════════════════════ */
+    let personalV2Cleanup = null;
+
+    function renderPersonalCarousel() {
+      const container = document.getElementById('personal-v2-carousel');
+      const counterEl = document.getElementById('personal-v2-counter');
+      if (!container) return;
+
+      // Clean up previous instance
+      if (personalV2Cleanup) { personalV2Cleanup(); personalV2Cleanup = null; }
+      container.innerHTML = '';
+
+      // Force critical styles (preview browser may cache CSS)
+      container.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;overflow:visible;cursor:grab;user-select:none;-webkit-user-select:none;';
+
+      const items = CONFIG.pageGalleries?.['personal-v2'] || [];
+      const total = items.length;
+      if (!total) return;
+
+      let activeIndex = 0;
+      let isAnimating = false;
+      let dragStartX = 0;
+      let dragOffset = 0;
+      let isDragging = false;
+      let didDrag = false;
+
+      // Sizing — spacing between slide centers
+      const getSpacing = () => {
+        const vw = window.innerWidth;
+        if (vw < 600) return vw * 0.65;
+        if (vw < 900) return vw * 0.50;
+        return Math.min(vw * 0.42, 600);
+      };
+      const ACTIVE_SCALE = 1.25;
+      const INACTIVE_SCALE = 0.78;
+      const TRANSITION_DURATION = 900; // ms
+
+      // Create DOM items
+      const imgHeight = Math.max(180, Math.min(window.innerHeight * 0.34, 420));
+      const slides = items.map((proj, idx) => {
+        const slide = document.createElement('div');
+        slide.className = 'pv2-slide';
+        slide.style.cssText = 'position:absolute;top:0;left:0;transform-origin:center center;will-change:transform,opacity;';
+        const img = document.createElement('img');
+        img.src = proj.image + '?auto=format&w=1200&q=85';
+        img.alt = proj.title;
+        img.loading = idx < 5 ? 'eager' : 'lazy';
+        img.draggable = false;
+        img.style.cssText = `height:${imgHeight}px;width:auto;max-width:none;object-fit:contain;display:block;pointer-events:none;`;
+        slide.appendChild(img);
+        slide.addEventListener('click', () => {
+          if (didDrag) { didDrag = false; return; }
+          if (idx === activeIndex) {
+            openLightbox(idx, items);
+          } else {
+            goTo(idx);
+          }
+        });
+        container.appendChild(slide);
+        return slide;
+      });
+
+      // Gap between edges of adjacent images (px)
+      const IMG_GAP = 96;
+
+      // Position all slides based on active index + optional drag offset
+      function layoutSlides(animate) {
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        const cx = cw / 2;
+        const cy = ch / 2;
+
+        // Pre-compute each slide's natural width (unscaled) and its scale
+        const slideData = slides.map((slide, i) => {
+          const img = slide.querySelector('img');
+          const naturalW = img ? img.clientWidth : 200;
+          const naturalH = img ? img.clientHeight : 200;
+          const scale = i === activeIndex ? ACTIVE_SCALE : INACTIVE_SCALE;
+          return { naturalW, naturalH, scale, scaledW: naturalW * scale };
+        });
+
+        // Compute X center for each slide by walking outward from active
+        const centerXs = new Array(slides.length).fill(0);
+        centerXs[activeIndex] = cx;
+
+        // Walk right from active
+        for (let i = activeIndex + 1; i < slides.length; i++) {
+          const prevHalfW = slideData[i - 1].scaledW / 2;
+          const currHalfW = slideData[i].scaledW / 2;
+          centerXs[i] = centerXs[i - 1] + prevHalfW + IMG_GAP + currHalfW;
+        }
+        // Walk left from active
+        for (let i = activeIndex - 1; i >= 0; i--) {
+          const nextHalfW = slideData[i + 1].scaledW / 2;
+          const currHalfW = slideData[i].scaledW / 2;
+          centerXs[i] = centerXs[i + 1] - nextHalfW - IMG_GAP - currHalfW;
+        }
+
+        slides.forEach((slide, i) => {
+          const rel = i - activeIndex;
+          const { naturalW, naturalH, scale } = slideData[i];
+          const z = i === activeIndex ? 10 : 1;
+          const opacity = Math.abs(rel) > 6 ? 0 : 1;
+
+          // Position so the slide's visual center lands at centerXs[i]
+          const x = centerXs[i] + dragOffset - naturalW / 2;
+          const y = cy - naturalH / 2;
+
+          if (animate) {
+            slide.style.transition = `transform ${TRANSITION_DURATION}ms cubic-bezier(0.16, 1, 0.3, 1)`;
+          } else {
+            slide.style.transition = 'none';
+          }
+
+          slide.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+          slide.style.zIndex = z;
+          slide.style.opacity = opacity;
+        });
+      }
+
+      // Update caption & counter
+      function updateCaption() {
+        const proj = items[activeIndex];
+        counterEl.textContent = `${activeIndex + 1} / ${total}`;
+      }
+
+      // Navigate to a specific index — never blocks input
+      function goTo(idx, animated = true) {
+        const newIdx = Math.max(0, Math.min(idx, total - 1));
+        activeIndex = newIdx;
+        dragOffset = 0;
+        layoutSlides(animated);
+        updateCaption();
+      }
+
+      function goNext() { if (activeIndex < total - 1) goTo(activeIndex + 1); }
+      function goPrev() { if (activeIndex > 0) goTo(activeIndex - 1); }
+
+      // ── Wheel navigation — accumulator-based, one image per gesture ──
+      let wheelAccum = 0;
+      let wheelTimer = null;
+      let lastWheelNav = 0;
+      const WHEEL_THRESHOLD = 50;   // accumulated delta needed to trigger
+      const WHEEL_COOLDOWN = 320;   // ms cooldown after each navigation
+      const WHEEL_RESET_DELAY = 120; // ms of silence before resetting accumulator
+
+      function onWheel(e) {
+        e.preventDefault();
+        const now = Date.now();
+
+        // Cooldown — absorb all wheel events shortly after a navigation
+        if (now - lastWheelNav < WHEEL_COOLDOWN) return;
+
+        // Accumulate delta (use the dominant axis)
+        const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+        wheelAccum += delta;
+
+        // Reset accumulator after a pause (end of gesture)
+        clearTimeout(wheelTimer);
+        wheelTimer = setTimeout(() => { wheelAccum = 0; }, WHEEL_RESET_DELAY);
+
+        // Trigger navigation once threshold is reached
+        if (Math.abs(wheelAccum) >= WHEEL_THRESHOLD) {
+          if (wheelAccum > 0) goNext();
+          else goPrev();
+          lastWheelNav = now;
+          wheelAccum = 0;
+          clearTimeout(wheelTimer);
+        }
+      }
+
+      // ── Mouse drag ──
+      function onMouseDown(e) {
+        isDragging = true;
+        didDrag = false;
+        dragStartX = e.clientX;
+        dragOffset = 0;
+        // Cancel any running CSS transitions so drag feels immediate
+        slides.forEach(s => { s.style.transition = 'none'; });
+        container.style.cursor = 'grabbing';
+      }
+      function onMouseMove(e) {
+        if (!isDragging) return;
+        dragOffset = e.clientX - dragStartX;
+        if (Math.abs(dragOffset) > 5) didDrag = true;
+        layoutSlides(false);
+      }
+      function onMouseUp() {
+        if (!isDragging) return;
+        isDragging = false;
+        container.style.cursor = '';
+        const threshold = getSpacing() * 0.18;
+        if (dragOffset > threshold) goPrev();
+        else if (dragOffset < -threshold) goNext();
+        else { dragOffset = 0; layoutSlides(true); }
+      }
+
+      // ── Touch drag ──
+      function onTouchStart(e) {
+        isDragging = true;
+        didDrag = false;
+        dragStartX = e.touches[0].clientX;
+        dragOffset = 0;
+        slides.forEach(s => { s.style.transition = 'none'; });
+      }
+      function onTouchMove(e) {
+        if (!isDragging) return;
+        dragOffset = e.touches[0].clientX - dragStartX;
+        if (Math.abs(dragOffset) > 5) didDrag = true;
+        layoutSlides(false);
+      }
+      function onTouchEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        const threshold = getSpacing() * 0.18;
+        if (dragOffset > threshold) goPrev();
+        else if (dragOffset < -threshold) goNext();
+        else { dragOffset = 0; layoutSlides(true); }
+      }
+
+      // ── Keyboard ──
+      function onKeyDown(e) {
+        if (currentPage !== 'personal-v2') return;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goNext(); }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goPrev(); }
+      }
+
+      // ── Resize ──
+      function onResize() { layoutSlides(false); }
+
+      // Attach events
+      container.addEventListener('wheel', onWheel, { passive: false });
+      container.addEventListener('mousedown', onMouseDown);
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+      container.addEventListener('touchstart', onTouchStart, { passive: true });
+      container.addEventListener('touchmove', onTouchMove, { passive: true });
+      container.addEventListener('touchend', onTouchEnd);
+      window.addEventListener('keydown', onKeyDown);
+      window.addEventListener('resize', onResize);
+
+      // Initial layout (no animation), then animate in after images start loading
+      goTo(0, false);
+
+      // Re-layout once first few images load so dimensions are correct
+      let loadCount = 0;
+      slides.forEach((slide, i) => {
+        const img = slide.querySelector('img');
+        if (img) {
+          const onLoad = () => {
+            loadCount++;
+            if (loadCount <= 5) layoutSlides(loadCount === 1);
+          };
+          if (img.complete) onLoad();
+          else img.addEventListener('load', onLoad, { once: true });
+        }
+      });
+
+      // Cursor events
+      slides.forEach(slide => {
+        slide.addEventListener('mouseenter', () => {
+          setCursorLabel('View');
+          cursor.classList.add('cursor--active');
+        });
+        slide.addEventListener('mouseleave', () => {
+          cursor.classList.remove('cursor--active');
+        });
+      });
+
+      // Cleanup
+      personalV2Cleanup = () => {
+        container.removeEventListener('wheel', onWheel);
+        container.removeEventListener('mousedown', onMouseDown);
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+        container.removeEventListener('touchstart', onTouchStart);
+        container.removeEventListener('touchmove', onTouchMove);
+        container.removeEventListener('touchend', onTouchEnd);
+        window.removeEventListener('keydown', onKeyDown);
+        window.removeEventListener('resize', onResize);
+        container.innerHTML = '';
+        counterEl.textContent = '';
+      };
+    }
+
+    /* ── Scroll reveal animation ─────────────────────── */
+    let scrollObs = null;
+    function animateItems(container) {
+      if (scrollObs) scrollObs.disconnect();
+      const items = container.querySelectorAll('.portfolio-item');
+      items.forEach(el => { el.style.transitionDelay = '0ms'; });
+
+      scrollObs = new IntersectionObserver(entries => {
+        const newEntries = entries.filter(e => e.isIntersecting);
+        newEntries.forEach((entry, i) => {
+          entry.target.style.transitionDelay = `${i * 100}ms`;
+          requestAnimationFrame(() => {
+            entry.target.classList.add('visible');
+          });
+          scrollObs.unobserve(entry.target);
+        });
+      }, { threshold: 0.06, rootMargin: '0px 0px -40px 0px' });
+      items.forEach(el => scrollObs.observe(el));
+    }
+
+    /* ════════════════════════════════════════════════════════
+       LIGHTBOX — slides up from bottom
+       ════════════════════════════════════════════════════════ */
+    function openLightbox(idx, items) {
+      lightboxIndex = idx;
+      currentItems = items;
+      updateLightbox();
+      document.getElementById('lightbox').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+      const lb = document.getElementById('lightbox');
+      lb.classList.add('closing');
+      lb.addEventListener('animationend', function onClose() {
+        lb.removeEventListener('animationend', onClose);
+        lb.classList.remove('open', 'closing');
+        document.body.style.overflow = '';
+      });
+    }
+    function updateLightbox() {
+      const proj = currentItems[lightboxIndex];
+      const img = document.getElementById('lb-img');
+      img.classList.add('lb-transitioning');
+      setTimeout(() => {
+        img.src = proj.image + '?auto=format&w=1400&q=90';
+        img.alt = proj.title;
+        img.onload = () => img.classList.remove('lb-transitioning');
+      }, 80);
+      document.getElementById('lb-title').textContent = proj.title;
+      document.getElementById('lb-subtitle').textContent = proj.subtitle;
+      document.getElementById('lb-counter').textContent =
+        `${String(lightboxIndex + 1).padStart(2,'0')} / ${String(currentItems.length).padStart(2,'0')}`;
+    }
+
+    document.getElementById('lb-close').addEventListener('click', closeLightbox);
+    document.getElementById('lightbox').addEventListener('click', e => {
+      if (e.target === e.currentTarget || e.target.classList.contains('lightbox-inner')) closeLightbox();
+    });
+    document.getElementById('lb-prev').addEventListener('click', () => {
+      lightboxIndex = (lightboxIndex - 1 + currentItems.length) % currentItems.length;
+      updateLightbox();
+    });
+    document.getElementById('lb-next').addEventListener('click', () => {
+      lightboxIndex = (lightboxIndex + 1) % currentItems.length;
+      updateLightbox();
+    });
+    document.addEventListener('keydown', e => {
+      if (!document.getElementById('lightbox').classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') { lightboxIndex = (lightboxIndex - 1 + currentItems.length) % currentItems.length; updateLightbox(); }
+      if (e.key === 'ArrowRight') { lightboxIndex = (lightboxIndex + 1) % currentItems.length; updateLightbox(); }
+    });
+
+    /* ════════════════════════════════════════════════════════
+       SLIDE-UP MENU
+       ════════════════════════════════════════════════════════ */
+    const menuOverlay = document.getElementById('menu-overlay');
+    const menuBtn = document.getElementById('menu-btn');
+    const menuClose = document.getElementById('menu-close');
+    let menuOpen = false;
+    let menuCurrentLink = null;
+    const _menuIsTouch = 'ontouchstart' in window;
+
+    // Build nav from CONFIG.menuPages
+    function buildMenuNav() {
+      const nav = document.getElementById('menu-nav');
+      if (!nav) return;
+      nav.innerHTML = '';
+
+      // Ensure preview image element exists in overlay
+      let previewEl = menuOverlay.querySelector('.menu-preview');
+      if (!previewEl) {
+        previewEl = document.createElement('img');
+        previewEl.className = 'menu-preview';
+        previewEl.alt = '';
+        previewEl.setAttribute('aria-hidden', 'true');
+        menuOverlay.appendChild(previewEl);
+      }
+
+      const menuPages = (typeof CONFIG !== 'undefined' && CONFIG.menuPages) || [];
+      menuPages.forEach((pg) => {
+        const a = document.createElement('a');
+        a.href = '#';
+        a.className = 'menu-link';
+        a.dataset.page = pg.id;
+        a.dataset.template = pg.template;
+        a.dataset.slug = pg.slug;
+        a.innerHTML = '<span class="menu-link-lbl">' + pg.menuLabel + '</span>';
+        nav.appendChild(a);
+      });
+      attachMenuLinkEvents();
+    }
+
+    // Build footer from CONFIG
+    function buildMenuFooter() {
+      const el = document.getElementById('menu-footer');
+      if (!el || typeof CONFIG === 'undefined') return;
+      const insta1    = CONFIG.instagram || '';
+      const insta1Url = CONFIG.instagramUrl || '#';
+      const insta2    = CONFIG.pageContent?.info?.instagram2Label || '';
+      const insta2Url = CONFIG.pageContent?.info?.instagram2Url   || '#';
+      el.innerHTML =
+        '<span class="menu-footer-left">Melbourne</span>' +
+        '<div class="menu-footer-right">' +
+          (insta2 ? '<a href="' + insta2Url + '" target="_blank" rel="noopener" class="menu-footer-link">' + insta2 + '</a>' : '') +
+          (insta1 ? '<a href="' + insta1Url + '" target="_blank" rel="noopener" class="menu-footer-link">' + insta1 + '</a>' : '') +
+        '</div>';
+    }
+
+    function openMenu() {
+      menuOpen = true;
+      menuOverlay.classList.remove('menu-ready');
+      menuOverlay.classList.add('open');
+      menuBtn.classList.add('hidden');
+      document.body.classList.add('menu-open');
+      setTimeout(() => { if (menuOpen) menuOverlay.classList.add('menu-ready'); }, 1600);
+    }
+    function closeMenu() {
+      menuOpen = false;
+      menuOverlay.classList.remove('open', 'menu-ready');
+      menuBtn.classList.remove('hidden');
+      document.body.classList.remove('menu-open');
+    }
+
+    menuBtn.addEventListener('click', openMenu);
+    menuClose.addEventListener('click', closeMenu);
+
+    // Menu name — navigate home
+    document.getElementById('menu-name').addEventListener('click', e => {
+      e.preventDefault();
+      closeMenu();
+      setTimeout(() => navigateTo((typeof CONFIG !== 'undefined' && CONFIG.homePage) ? CONFIG.homePage : 'intro'), 100);
+    });
+
+    function attachMenuLinkEvents() {
+      const nav = document.getElementById('menu-nav');
+      const previewEl = menuOverlay.querySelector('.menu-preview');
+      let previewTimer = null;
+
+      nav.querySelectorAll('.menu-link').forEach(link => {
+        if (!_menuIsTouch) {
+          link.addEventListener('mouseenter', () => {
+            if (menuCurrentLink && menuCurrentLink !== link) menuCurrentLink.classList.remove('hovered');
+            link.classList.add('hovered');
+            menuCurrentLink = link;
+            nav.classList.add('has-hover');
+            menuOverlay.classList.add('has-item-hover');
+
+            // Preview image reveal
+            if (previewEl) {
+              const pageId  = link.dataset.page;
+              const ownGallery = (typeof CONFIG !== 'undefined' && CONFIG.pageGalleries?.[pageId]) || [];
+              const gallery = ownGallery.length > 0 ? ownGallery
+                : (CONFIG.pageGalleries?.['people'] || CONFIG.pageGalleries?.['intro'] || []);
+              clearTimeout(previewTimer);
+              if (gallery.length > 0) {
+                const imgUrl = (gallery[0].image || gallery[0].url || '');
+                if (imgUrl) {
+                  if (previewEl.getAttribute('data-current') !== imgUrl) {
+                    previewEl.classList.remove('visible');
+                    previewTimer = setTimeout(() => {
+                      previewEl.src = imgUrl;
+                      previewEl.setAttribute('data-current', imgUrl);
+                      void previewEl.offsetHeight;
+                      previewEl.classList.add('visible');
+                    }, 30);
+                  } else {
+                    previewEl.classList.add('visible');
+                  }
+                } else {
+                  previewEl.classList.remove('visible');
+                }
+              } else {
+                previewEl.classList.remove('visible');
+              }
+            }
+          });
+          link.addEventListener('mouseleave', () => {
+            link.classList.remove('hovered');
+            if (menuCurrentLink === link) menuCurrentLink = null;
+            setTimeout(() => {
+              if (!menuCurrentLink) {
+                nav.classList.remove('has-hover');
+                menuOverlay.classList.remove('has-item-hover');
+                if (previewEl) { clearTimeout(previewTimer); previewEl.classList.remove('visible'); }
+              }
+            }, 50);
+          });
+        }
+        link.addEventListener('click', e => {
+          e.preventDefault();
+          const tpl  = link.dataset.template;
+          const slug = link.dataset.slug;
+          const id   = link.dataset.page;
+          closeMenu();
+          if (tpl === 'archive-standalone' || tpl === 'filmstrip') {
+            setTimeout(() => { window.location.href = '/' + slug + '.html'; }, 120);
+          } else {
+            setTimeout(() => navigateTo(id), 100);
+          }
+        });
+      });
+    }
+
+    // Page title links
+    document.addEventListener('click', e => {
+      const link = e.target.closest('.page-title-link');
+      if (link) { e.preventDefault(); navigateTo(link.dataset.page); }
+    });
+
+    // Escape key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && menuOpen) closeMenu();
+    });
+
+    buildMenuNav();
+    buildMenuFooter();
+
+    /* ════════════════════════════════════════════════════════
+       CUSTOM CURSOR
+       ════════════════════════════════════════════════════════ */
+    const cursor = document.getElementById('cursor');
+    let cxPos = 0, cyPos = 0, pxPos = 0, pyPos = 0;
+    const isTouch = 'ontouchstart' in window;
+    const cursorSpan = cursor.querySelector('span');
+
+    function setCursorLabel(label) {
+      cursorSpan.textContent = label;
+    }
+
+    function reattachCursorEvents() {
+      if (isTouch) return;
+      document.querySelectorAll('.portfolio-item, .carousel-slide').forEach(item => {
+        item.addEventListener('mouseenter', () => {
+          setCursorLabel('View');
+          cursor.classList.add('cursor--active');
+        });
+        item.addEventListener('mouseleave', () => {
+          cursor.classList.remove('cursor--active');
+        });
+      });
+    }
+
+    if (!isTouch) {
+      document.addEventListener('mousemove', e => { cxPos = e.clientX; cyPos = e.clientY; });
+      (function loop() {
+        pxPos += (cxPos - pxPos) * 0.12;
+        pyPos += (cyPos - pyPos) * 0.12;
+        cursor.style.transform = `translate(${pxPos}px, ${pyPos}px)`;
+        requestAnimationFrame(loop);
+      })();
+
+      // Menu button → cursor label
+      document.querySelectorAll('#menu-btn').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          setCursorLabel('Menu');
+          cursor.classList.add('cursor--link', 'cursor--label');
+        });
+        el.addEventListener('mouseleave', () => cursor.classList.remove('cursor--link', 'cursor--label'));
+      });
+
+      // Site logo cursor
+      const loaderLogo = document.getElementById('site-logo');
+      if (loaderLogo) {
+        loaderLogo.addEventListener('mouseenter', () => cursor.classList.add('cursor--link'));
+        loaderLogo.addEventListener('mouseleave', () => cursor.classList.remove('cursor--link'));
+      }
+
+      // Menu links
+      document.querySelectorAll('.menu-link, .menu-close, .menu-footer-link, .menu-name').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('cursor--link'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('cursor--link'));
+      });
+
+      // Page title links
+      document.querySelectorAll('.page-title-link').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('cursor--link'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('cursor--link'));
+      });
+
+      // Other links
+      document.querySelectorAll('.footer-email, .footer-social, .back-top, .about-links a, .lightbox-nav, .lightbox-close').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('cursor--link'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('cursor--link'));
+      });
+    } else {
+      cursor.style.display = 'none';
+    }
+
+  })();
+  </script>
+</body>
+</html>

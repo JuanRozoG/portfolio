@@ -1,0 +1,890 @@
+[
+  {
+    "content": {
+      "footerCta1": "Got a project?",
+      "footerCta2": "Let's work together.",
+      "tagline": "Melbourne based. Photographer & Art-director."
+    },
+    "gallery": [
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img001"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img002"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img003"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img004"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img005"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img006"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img007"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img008"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img020"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img021"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img022"
+      }
+    ],
+    "id": "intro",
+    "inMenu": true,
+    "isHome": true,
+    "menuLabel": "Home",
+    "menuOrder": 0,
+    "sections": [
+      {
+        "enabled": true,
+        "id": "collage",
+        "label": "Collage de imágenes"
+      },
+      {
+        "enabled": true,
+        "id": "name",
+        "label": "Nombre y tagline"
+      }
+    ],
+    "seo": {
+      "indexable": true,
+      "metaDescription": "Juan Rozo — Photographer & Art-director. Melbourne based.",
+      "ogImage": "https://juanrozo.com/wp-content/uploads/2025/01/JRG9384-Edit-3-scaled.jpg",
+      "pageTitle": "Juan Rozo"
+    },
+    "slug": "intro",
+    "status": "published",
+    "template": "intro",
+    "title": "Intro"
+  },
+  {
+    "gallery": [
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img001"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img002"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img003"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img004"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img005"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img006"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img007"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img008"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img009"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img010"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img011"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img012"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img013"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img014"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img015"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img016"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img017"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img018"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img019"
+      }
+    ],
+    "id": "people",
+    "inMenu": true,
+    "menuLabel": "People",
+    "menuOrder": 1,
+    "sections": [
+      {
+        "enabled": true,
+        "id": "carousel",
+        "label": "Carousel de proyectos"
+      }
+    ],
+    "seo": {
+      "indexable": true,
+      "metaDescription": "Portrait and people photography by Juan Rozo, Melbourne.",
+      "ogImage": "",
+      "pageTitle": "People — Juan Rozo"
+    },
+    "slug": "people",
+    "status": "published",
+    "template": "carousel",
+    "title": "People"
+  },
+  {
+    "id": "things",
+    "title": "Things",
+    "slug": "things",
+    "template": "grid",
+    "status": "published",
+    "inMenu": true,
+    "menuLabel": "Things",
+    "menuOrder": 2,
+    "sections": [
+      {
+        "id": "grid",
+        "label": "Grid de proyectos",
+        "enabled": true
+      }
+    ],
+    "gallery": [
+      {
+        "imageId": "img020",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img021",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img022",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img023",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img024",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img025",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img026",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img027",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img028",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img029",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img030",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img031",
+        "alt": "",
+        "caption": ""
+      }
+    ],
+    "seo": {
+      "pageTitle": "Things — Juan Rozo",
+      "metaDescription": "Still life and product photography by Juan Rozo, Melbourne.",
+      "ogImage": "",
+      "indexable": true
+    }
+  },
+  {
+    "id": "personal-v2",
+    "title": "Personal",
+    "slug": "personal",
+    "template": "fullscreen-carousel",
+    "status": "published",
+    "inMenu": true,
+    "menuLabel": "Personal",
+    "menuOrder": 3,
+    "sections": [
+      {
+        "id": "carousel",
+        "label": "Carousel pantalla completa",
+        "enabled": true
+      },
+      {
+        "id": "counter",
+        "label": "Contador de imágenes",
+        "enabled": true
+      }
+    ],
+    "gallery": [
+      {
+        "imageId": "img032",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img033",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img034",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img035",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img036",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img037",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img038",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img039",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img040",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img041",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img042",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img043",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img044",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img045",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img046",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img047",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img048",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img049",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img050",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img051",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "imageId": "img052",
+        "alt": "",
+        "caption": ""
+      }
+    ],
+    "seo": {
+      "pageTitle": "Personal — Juan Rozo",
+      "metaDescription": "Personal and street photography by Juan Rozo, Melbourne.",
+      "ogImage": "",
+      "indexable": true
+    }
+  },
+  {
+    "id": "info",
+    "title": "Info",
+    "slug": "info",
+    "template": "info",
+    "status": "published",
+    "inMenu": true,
+    "menuLabel": "Info",
+    "menuOrder": 4,
+    "sections": [
+      {
+        "id": "photo",
+        "label": "Foto de perfil",
+        "enabled": true
+      },
+      {
+        "id": "bio",
+        "label": "Biografía",
+        "enabled": true
+      },
+      {
+        "id": "social",
+        "label": "Links sociales",
+        "enabled": true
+      },
+      {
+        "id": "clients",
+        "label": "Logos de clientes",
+        "enabled": true
+      }
+    ],
+    "gallery": [],
+    "content": {
+      "label": "About",
+      "role": "Melbourne based. Photographer & Art-director.",
+      "instagram2Label": "@babyjuanmoretime",
+      "instagram2Url": "https://instagram.com/babyjuanmoretime"
+    },
+    "seo": {
+      "pageTitle": "Info — Juan Rozo",
+      "metaDescription": "About Juan Rozo — photographer and art-director based in Melbourne.",
+      "ogImage": "",
+      "indexable": true
+    }
+  },
+  {
+    "gallery": [
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img001"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img002"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img003"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img004"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img005"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img006"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img007"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img008"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img009"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img010"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img011"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img012"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img013"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img014"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img015"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img016"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img017"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img018"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img019"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img020"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img021"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img022"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img023"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img024"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img025"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img026"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img027"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img028"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img029"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img030"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img031"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img032"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img033"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img034"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img035"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img036"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img037"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img038"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img039"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img040"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img041"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img042"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img043"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img044"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img045"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img046"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img047"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img048"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img049"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img050"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img051"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img052"
+      }
+    ],
+    "id": "archive",
+    "inMenu": false,
+    "isHome": false,
+    "menuLabel": "Archive",
+    "menuOrder": 5,
+    "sections": [
+      {
+        "enabled": true,
+        "id": "grid",
+        "label": "Galería de archivo"
+      }
+    ],
+    "seo": {
+      "indexable": false,
+      "metaDescription": "Archive — Juan Rozo portfolio.",
+      "ogImage": "",
+      "pageTitle": "Archive — Juan Rozo"
+    },
+    "slug": "archive",
+    "status": "published",
+    "template": "archive",
+    "title": "Archive"
+  },
+  {
+    "content": {},
+    "gallery": [
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img008"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img017"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img031"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img040"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img047"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img019"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img051"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img034"
+      },
+      {
+        "alt": "",
+        "caption": "",
+        "imageId": "img022"
+      }
+    ],
+    "id": "archive-intro-v1",
+    "inMenu": false,
+    "isHome": false,
+    "menuLabel": "Archive — Intro v1",
+    "menuOrder": 10,
+    "sections": [],
+    "seo": {
+      "indexable": false,
+      "metaDescription": "",
+      "ogImage": "",
+      "pageTitle": "Juan Rozo — Archive: Intro v1"
+    },
+    "slug": "archive-intro-v1",
+    "status": "published",
+    "template": "archive-standalone",
+    "title": "Archive — Intro v1"
+  },
+  {
+    "content": {},
+    "gallery": [],
+    "id": "archive-personal-v1",
+    "inMenu": false,
+    "isHome": false,
+    "menuLabel": "Archive — Personal v1",
+    "menuOrder": 11,
+    "sections": [],
+    "seo": {
+      "indexable": false,
+      "metaDescription": "",
+      "ogImage": "",
+      "pageTitle": "Juan Rozo — Archive: Personal v1"
+    },
+    "slug": "archive-personal-v1",
+    "status": "published",
+    "template": "archive-standalone",
+    "title": "Archive — Personal v1"
+  },
+  {
+    "content": {},
+    "gallery": [],
+    "id": "archive-intro-loader-v1",
+    "inMenu": false,
+    "isHome": false,
+    "menuLabel": "Archive — Intro Loader v1",
+    "menuOrder": 12,
+    "sections": [],
+    "seo": {
+      "indexable": false,
+      "metaDescription": "",
+      "ogImage": "",
+      "pageTitle": "Juan Rozo — Archive: Intro Loader v1"
+    },
+    "slug": "archive-intro-loader-v1",
+    "status": "published",
+    "template": "archive-standalone",
+    "title": "Archive — Intro Loader v1"
+  },
+  {
+    "content": {},
+    "gallery": [],
+    "id": "archive-filmstrip-v1",
+    "inMenu": false,
+    "isHome": false,
+    "menuLabel": "Archive — Filmstrip v1",
+    "menuOrder": 13,
+    "sections": [],
+    "seo": {
+      "indexable": false,
+      "metaDescription": "",
+      "ogImage": "",
+      "pageTitle": "Juan Rozo — Filmstrip"
+    },
+    "slug": "archive-filmstrip-v1",
+    "status": "published",
+    "template": "filmstrip",
+    "title": "Archive — Filmstrip v1"
+  }
+]
