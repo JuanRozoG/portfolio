@@ -1,5 +1,5 @@
 // AUTO-GENERATED — Edit content via /admin/  Do not edit manually.
-// Generated: 2026-04-07 08:37:26
+// Generated: 2026-04-10 07:46:01
 
 const CONFIG = {
 
@@ -57,7 +57,6 @@ Available for freelance hire.`,
   menuPages: [{"id": "intro", "menuLabel": "Home", "template": "intro", "slug": "intro"}, {"id": "people", "menuLabel": "People", "template": "carousel", "slug": "people"}, {"id": "things", "menuLabel": "Things", "template": "grid", "slug": "things"}, {"id": "personal-v2", "menuLabel": "Personal", "template": "fullscreen-carousel", "slug": "personal"}, {"id": "info", "menuLabel": "Info", "template": "info", "slug": "info"}],
 
   // ── Page galleries (source of truth for all portfolio pages) ──
-  // Each entry: { id, url, image, alt, title, caption, subtitle, categories }
   pageGalleries: {
     "intro": [
       {"id": "img001", "url": "https://juanrozo.com/wp-content/uploads/2025/01/14E7B706-BBA0-43FA-98CC-2283295DE848_1_105_c.jpeg", "image": "https://juanrozo.com/wp-content/uploads/2025/01/14E7B706-BBA0-43FA-98CC-2283295DE848_1_105_c.jpeg", "alt": "Portrait I", "title": "Portrait I", "caption": "", "subtitle": "", "categories": ["works", "people"]},
@@ -205,7 +204,7 @@ Available for freelance hire.`,
     ],
   },
 
-  // ── Projects (reserved for future use — currently empty) ──
+  // ── Projects (reserved for future use) ──
   projects: [],
 
 };

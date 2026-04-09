@@ -2,13 +2,12 @@
 """
 Mini CMS Server — Juan Rozo Portfolio
 ──────────────────────────────────────
-Run:      python3 server.py
-Portfolio: http://localhost:8080/
-Admin:     http://localhost:8080/admin/
-Password:  set ADMIN_PASSWORD env var (default: portfolio2026)
-Debug:     set DEBUG=1 for verbose logging and richer error responses
-
-Requires: pip install flask
+Local dev:  python3 server.py          (uses data/*.json files)
+Vercel:     set MONGO_URI env var      (uses MongoDB Atlas)
+Portfolio:  http://localhost:8080/
+Admin:      http://localhost:8080/admin/
+Password:   set ADMIN_PASSWORD env var (default: portfolio2026)
+Debug:      set DEBUG=1 for verbose logging
 """
 
 import copy
@@ -33,9 +32,10 @@ ADMIN_DIR  = BASE_DIR / "admin"
 DATA_DIR.mkdir(exist_ok=True)
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-# ── Config & debug mode ────────────────────────────────────────────────────────
+# ── Config ─────────────────────────────────────────────────────────────────────
 ADMIN_PASSWORD     = os.environ.get("ADMIN_PASSWORD", "portfolio2026")
 DEBUG_MODE         = os.environ.get("DEBUG", "false").lower() in ("1", "true", "yes")
+MONGO_URI          = os.environ.get("MONGO_URI", "")          # Set on Vercel; empty = local file mode
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp", "svg", "avif"}
 CORE_PAGES         = {
     "intro", "people", "things", "personal-v2", "info", "archive",
@@ -50,12 +50,11 @@ logging.basicConfig(
 )
 log = logging.getLogger("cms")
 
-# Silence Flask/Werkzeug request logs unless in debug mode
 if not DEBUG_MODE:
     logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
 # ── App ────────────────────────────────────────────────────────────────────────
-app = Flask(__name__, static_folder=None)  # We serve static files manually via /<path:filename>
+app = Flask(__name__, static_folder=None)
 
 # ── Auth ───────────────────────────────────────────────────────────────────────
 def _authorized():
@@ -84,22 +83,18 @@ def require_auth(f):
 # ── Global error handlers ──────────────────────────────────────────────────────
 @app.errorhandler(400)
 def handle_400(e):
-    log.warning("400 Bad Request: %s %s", request.method, request.path)
     return jsonify({"error": "Bad request", "detail": str(e)}), 400
 
 @app.errorhandler(403)
 def handle_403(e):
-    log.warning("403 Forbidden: %s %s", request.method, request.path)
     return jsonify({"error": "Forbidden", "detail": str(e)}), 403
 
 @app.errorhandler(404)
 def handle_404(e):
-    log.warning("404 Not Found: %s %s", request.method, request.path)
     return jsonify({"error": "Not found", "path": request.path}), 404
 
 @app.errorhandler(405)
 def handle_405(e):
-    log.warning("405 Method Not Allowed: %s %s", request.method, request.path)
     return jsonify({"error": "Method not allowed"}), 405
 
 @app.errorhandler(Exception)
@@ -107,8 +102,6 @@ def handle_exception(e):
     tb = traceback.format_exc()
     log.error("Unhandled exception on %s %s — %s: %s",
               request.method, request.path, type(e).__name__, e)
-    if DEBUG_MODE:
-        log.debug("Traceback:\n%s", tb)
     resp = {
         "error":   "Internal server error",
         "message": str(e) if DEBUG_MODE else "An unexpected error occurred.",
@@ -118,42 +111,80 @@ def handle_exception(e):
         resp["type"]      = type(e).__name__
     return jsonify(resp), 500
 
-# ── JSON helpers ───────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+#  Data layer — MongoDB (Vercel) or local JSON files (dev)
+# ══════════════════════════════════════════════════════════════════════════════
+_mongo_db = None
+
+def _get_db():
+    """Return MongoDB database, creating connection on first call."""
+    global _mongo_db
+    if _mongo_db is None:
+        from pymongo import MongoClient
+        client  = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        _mongo_db = client["portfolio"]
+        log.info("MongoDB connected")
+    return _mongo_db
+
 def read_json(filename: str):
-    path = DATA_DIR / filename
-    if not path.exists():
-        log.debug("read_json(%s): file not found, returning None", filename)
-        return None
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        if isinstance(data, list):
-            log.debug("read_json(%s): loaded %d items", filename, len(data))
-        else:
-            log.debug("read_json(%s): loaded OK", filename)
-        return data
-    except json.JSONDecodeError as e:
-        log.error("read_json(%s): JSON parse error at line %d col %d — %s",
-                  filename, e.lineno, e.colno, e.msg)
-        raise ValueError(f"Corrupt JSON in {filename}: {e}") from e
-    except OSError as e:
-        log.error("read_json(%s): OS error — %s", filename, e)
-        raise
+    """Read a data document. Uses MongoDB when MONGO_URI is set, local files otherwise."""
+    if MONGO_URI:
+        try:
+            db  = _get_db()
+            doc = db.data.find_one({"_id": filename})
+            if doc is None:
+                log.debug("read_json(%s): not found in MongoDB", filename)
+                return None
+            log.debug("read_json(%s): loaded from MongoDB", filename)
+            return doc["data"]
+        except Exception as e:
+            log.error("read_json(%s) MongoDB error — %s", filename, e)
+            raise
+    else:
+        path = DATA_DIR / filename
+        if not path.exists():
+            log.debug("read_json(%s): file not found", filename)
+            return None
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            log.debug("read_json(%s): loaded %s items", filename,
+                      len(data) if isinstance(data, list) else "object")
+            return data
+        except json.JSONDecodeError as e:
+            log.error("read_json(%s): JSON parse error — %s", filename, e)
+            raise ValueError(f"Corrupt JSON in {filename}: {e}") from e
 
 def write_json(filename: str, data):
-    path = DATA_DIR / filename
-    tmp  = str(path) + ".tmp"
-    try:
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        os.replace(tmp, path)
-        count = len(data) if isinstance(data, list) else "object"
-        log.debug("write_json(%s): wrote %s", filename, count)
-    except OSError as e:
-        log.error("write_json(%s): failed — %s", filename, e)
-        raise
+    """Write a data document. Uses MongoDB when MONGO_URI is set, local files otherwise."""
+    if MONGO_URI:
+        try:
+            db = _get_db()
+            db.data.replace_one(
+                {"_id": filename},
+                {"_id": filename, "data": data},
+                upsert=True,
+            )
+            log.debug("write_json(%s): saved to MongoDB", filename)
+        except Exception as e:
+            log.error("write_json(%s) MongoDB error — %s", filename, e)
+            raise
+    else:
+        path = DATA_DIR / filename
+        tmp  = str(path) + ".tmp"
+        try:
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            os.replace(tmp, path)
+            log.debug("write_json(%s): wrote %s", filename,
+                      len(data) if isinstance(data, list) else "object")
+        except OSError as e:
+            log.error("write_json(%s): failed — %s", filename, e)
+            raise
 
-# ── config.js generator ────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+#  config.js builder
+# ══════════════════════════════════════════════════════════════════════════════
 def _safe_menu_item(p):
     """Return a menu-item dict for page p, or None if the page is malformed."""
     try:
@@ -167,171 +198,178 @@ def _safe_menu_item(p):
         log.warning("_safe_menu_item: skipping malformed page — %s", e)
         return None
 
+def _build_config_content() -> str:
+    """Generate the full config.js JavaScript string from current data."""
+    site   = read_json("site.json") or {}
+    pages  = read_json("pages.json") or []
+    images = read_json("images.json") or []
+
+    img_map = {img["id"]: img for img in images}
+
+    home_page_id = next((p["id"] for p in pages if p.get("isHome")), "intro")
+
+    sections_map = {}
+    for page in pages:
+        try:
+            sections_map[page["id"]] = {
+                s["id"]: s.get("enabled", True)
+                for s in page.get("sections", [])
+            }
+        except Exception as e:
+            log.warning("_build_config_content: skipping sections for '%s' — %s", page.get("id", "?"), e)
+
+    page_galleries = {}
+    for page in pages:
+        pid = page.get("id", "unknown")
+        try:
+            resolved = []
+            for ref in page.get("gallery", []):
+                img = img_map.get(ref.get("imageId"))
+                if not img:
+                    log.debug("config: imageId '%s' in page '%s' not found — skipped",
+                              ref.get("imageId"), pid)
+                    continue
+                url     = img.get("url", "")
+                alt     = ref.get("alt") or img.get("alt", "")
+                caption = ref.get("caption") or img.get("caption", "")
+                cats    = img.get("categories", [])
+                resolved.append({
+                    "id":         img["id"],
+                    "url":        url,
+                    "image":      url,
+                    "alt":        alt,
+                    "title":      alt,
+                    "caption":    caption,
+                    "subtitle":   caption,
+                    "categories": cats,
+                })
+            page_galleries[pid] = resolved
+        except Exception as e:
+            log.warning("config: skipping gallery for '%s' — %s", pid, e)
+            page_galleries[pid] = []
+
+    bio = site.get("about", {}).get("bio", "").replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
+
+    lines = [
+        "// AUTO-GENERATED — Edit content via /admin/  Do not edit manually.",
+        "// Generated: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "",
+        "const CONFIG = {",
+        "",
+        f"  homePage: {json.dumps(home_page_id)},",
+        "",
+        "  // ── Personal info ───────────────────────────────────────",
+        f"  name:          {json.dumps(site.get('name', ''))},",
+        f"  tagline:       {json.dumps(site.get('tagline', ''))},",
+        f"  phone:         {json.dumps(site.get('phone', ''))},",
+        f"  phoneHref:     {json.dumps(site.get('phoneHref', ''))},",
+        f"  email:         {json.dumps(site.get('email', ''))},",
+        f"  instagram:     {json.dumps(site.get('instagram', ''))},",
+        f"  instagramUrl:  {json.dumps(site.get('instagramUrl', ''))},",
+        f"  copyright:     {json.dumps(site.get('copyright', ''))},",
+        "",
+        "  // ── About section ───────────────────────────────────────",
+        "  about: {",
+        f"    photo: {json.dumps(site.get('about', {}).get('photo', ''))},",
+        f"    bio: `{bio}`,",
+        "  },",
+        "",
+        f"  logoUrl: {json.dumps(site.get('logoUrl', ''))},",
+        "",
+        "  // ── Client logos ────────────────────────────────────────",
+        "  clientLogos: [",
+    ]
+
+    for logo in site.get("clientLogos", []):
+        lines.append(f"    {{ name: {json.dumps(logo['name'])}, url: {json.dumps(logo['url'])} }},")
+
+    lines += [
+        "  ],",
+        "",
+        "  // ── Section visibility ──────────────────────────────────",
+        "  sections: " + json.dumps(sections_map, ensure_ascii=False) + ",",
+        "",
+        "  // ── Page content (template-specific editable text) ──────",
+        "  pageContent: " + json.dumps(
+            {p["id"]: p["content"] for p in pages if p.get("content")},
+            ensure_ascii=False
+        ) + ",",
+        "",
+        "  // ── Page templates (template key per page id) ─────────────────",
+        "  pageTemplates: " + json.dumps(
+            {p["id"]: p.get("template", "") for p in pages},
+            ensure_ascii=False
+        ) + ",",
+        "",
+        "  // ── Menu pages (backend-driven nav, sorted by menuOrder) ────",
+        "  menuPages: " + json.dumps(
+            [item for item in (
+                _safe_menu_item(p)
+                for p in sorted(
+                    [p for p in pages if p.get("id") and p.get("inMenu") and p.get("status") == "published"],
+                    key=lambda p: p.get("menuOrder", 999)
+                )
+            ) if item is not None],
+            ensure_ascii=False
+        ) + ",",
+        "",
+        "  // ── Page galleries (source of truth for all portfolio pages) ──",
+        "  pageGalleries: {",
+    ]
+
+    for page_id, gallery in page_galleries.items():
+        lines.append(f"    {json.dumps(page_id)}: [")
+        for item in gallery:
+            lines.append("      " + json.dumps(item, ensure_ascii=False) + ",")
+        lines.append("    ],")
+
+    lines += [
+        "  },",
+        "",
+        "  // ── Projects (reserved for future use) ──",
+        "  projects: [],",
+        "",
+        "};",
+        "",
+    ]
+
+    return "\n".join(lines)
+
 def regenerate_config_js():
-    """Rebuild config.js from data/*.json so the portfolio picks up changes."""
+    """
+    Rebuild config.js.
+    - Local mode (no MONGO_URI): writes file to disk so the static /config.js is up to date.
+    - Vercel mode (MONGO_URI set): no-op — config.js is served dynamically via GET /config.js.
+    """
+    if MONGO_URI:
+        log.debug("regenerate_config_js: Vercel mode — served dynamically, skip file write")
+        return
     try:
-        site    = read_json("site.json") or {}
-        pages   = read_json("pages.json") or []
-        images  = read_json("images.json") or []
-
-        img_map = {img["id"]: img for img in images}
-
-        # Determine the home page (fallback to 'intro')
-        home_page_id = next((p["id"] for p in pages if p.get("isHome")), "intro")
-
-        sections_map = {}
-        for page in pages:
-            try:
-                sections_map[page["id"]] = {
-                    s["id"]: s.get("enabled", True)
-                    for s in page.get("sections", [])
-                }
-            except Exception as e:
-                log.warning("regenerate_config_js: skipping sections for page '%s' — %s", page.get("id", "?"), e)
-
-        page_galleries = {}
-        for page in pages:
-            pid = page.get("id", "unknown")
-            try:
-                resolved = []
-                for ref in page.get("gallery", []):
-                    img = img_map.get(ref.get("imageId"))
-                    if not img:
-                        log.debug("regenerate_config_js: imageId '%s' in page '%s' not found in library — skipped",
-                                  ref.get("imageId"), pid)
-                        continue
-                    url     = img.get("url", "")
-                    alt     = ref.get("alt") or img.get("alt", "")
-                    caption = ref.get("caption") or img.get("caption", "")
-                    cats    = img.get("categories", [])
-                    resolved.append({
-                        "id":         img["id"],
-                        "url":        url,
-                        "image":      url,
-                        "alt":        alt,
-                        "title":      alt,
-                        "caption":    caption,
-                        "subtitle":   caption,
-                        "categories": cats,
-                    })
-                page_galleries[pid] = resolved
-            except Exception as e:
-                log.warning("regenerate_config_js: skipping gallery for page '%s' — %s", pid, e)
-                page_galleries[pid] = []
-
-        bio = site.get("about", {}).get("bio", "").replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
-
-        lines = [
-            "// AUTO-GENERATED — Edit content via /admin/  Do not edit manually.",
-            "// Generated: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "",
-            "const CONFIG = {",
-            "",
-            f"  homePage: {json.dumps(home_page_id)},",
-            "",
-            "  // ── Personal info ───────────────────────────────────────",
-            f"  name:          {json.dumps(site.get('name', ''))},",
-            f"  tagline:       {json.dumps(site.get('tagline', ''))},",
-            f"  phone:         {json.dumps(site.get('phone', ''))},",
-            f"  phoneHref:     {json.dumps(site.get('phoneHref', ''))},",
-            f"  email:         {json.dumps(site.get('email', ''))},",
-            f"  instagram:     {json.dumps(site.get('instagram', ''))},",
-            f"  instagramUrl:  {json.dumps(site.get('instagramUrl', ''))},",
-            f"  copyright:     {json.dumps(site.get('copyright', ''))},",
-            "",
-            "  // ── About section ───────────────────────────────────────",
-            "  about: {",
-            f"    photo: {json.dumps(site.get('about', {}).get('photo', ''))},",
-            f"    bio: `{bio}`,",
-            "  },",
-            "",
-            f"  logoUrl: {json.dumps(site.get('logoUrl', ''))},",
-            "",
-            "  // ── Client logos ────────────────────────────────────────",
-            "  clientLogos: [",
-        ]
-
-        for logo in site.get("clientLogos", []):
-            lines.append(f"    {{ name: {json.dumps(logo['name'])}, url: {json.dumps(logo['url'])} }},")
-
-        lines += [
-            "  ],",
-            "",
-            "  // ── Section visibility ──────────────────────────────────",
-            "  sections: " + json.dumps(sections_map, ensure_ascii=False) + ",",
-            "",
-            "  // ── Page content (template-specific editable text) ──────",
-            "  pageContent: " + json.dumps(
-                {p["id"]: p["content"] for p in pages if p.get("content")},
-                ensure_ascii=False
-            ) + ",",
-            "",
-            "  // ── Page templates (template key per page id) ─────────────────",
-            "  pageTemplates: " + json.dumps(
-                {p["id"]: p.get("template", "") for p in pages},
-                ensure_ascii=False
-            ) + ",",
-            "",
-            "  // ── Menu pages (backend-driven nav, sorted by menuOrder) ────",
-            "  menuPages: " + json.dumps(
-                [item for item in (
-                    _safe_menu_item(p)
-                    for p in sorted(
-                        [p for p in pages if p.get("id") and p.get("inMenu") and p.get("status") == "published"],
-                        key=lambda p: p.get("menuOrder", 999)
-                    )
-                ) if item is not None],
-                ensure_ascii=False
-            ) + ",",
-            "",
-            "  // ── Page galleries (source of truth for all portfolio pages) ──",
-            "  // Each entry: { id, url, image, alt, title, caption, subtitle, categories }",
-            "  pageGalleries: {",
-        ]
-
-        for page_id, gallery in page_galleries.items():
-            lines.append(f"    {json.dumps(page_id)}: [")
-            for item in gallery:
-                lines.append("      " + json.dumps(item, ensure_ascii=False) + ",")
-            lines.append("    ],")
-
-        lines += [
-            "  },",
-            "",
-            "  // ── Projects (reserved for future use — currently empty) ──",
-            "  projects: [],",
-            "",
-            "};",
-            "",
-        ]
-
+        content     = _build_config_content()
         config_path = BASE_DIR / "config.js"
         with open(config_path, "w", encoding="utf-8") as f:
-            f.write("\n".join(lines))
-
-        total_imgs = sum(len(g) for g in page_galleries.values())
-        log.info("config.js regenerated — %d pages, %d total gallery items", len(pages), total_imgs)
-
+            f.write(content)
+        log.info("config.js regenerated")
     except Exception as e:
         log.error("regenerate_config_js FAILED — %s: %s", type(e).__name__, e)
         if DEBUG_MODE:
             log.debug(traceback.format_exc())
         raise
 
-# ── HTML patchers ──────────────────────────────────────────────────────────────
+# ── HTML patchers (local dev only — Vercel serves static HTML from repo) ───────
 def patch_html_seo(page_data: dict):
-    """Patch <head> of index.html with SEO from the intro page."""
+    """Patch <head> of index.html with SEO. Active in local mode only."""
+    if MONGO_URI:
+        return  # Vercel: static HTML served from repo; SEO data lives in DB
     if page_data.get("id") != "intro":
         return
     seo = page_data.get("seo", {})
     html_path = BASE_DIR / "index.html"
     if not html_path.exists():
-        log.warning("patch_html_seo: index.html not found — skipping")
         return
     try:
         with open(html_path, "r", encoding="utf-8") as f:
             content = f.read()
-
         if seo.get("pageTitle"):
             content = re.sub(r"<title>[^<]*</title>",
                              f"<title>{seo['pageTitle']}</title>", content)
@@ -355,7 +393,6 @@ def patch_html_seo(page_data: dict):
                     '  <meta name="robots" content="noindex,nofollow" />\n</head>')
         else:
             content = re.sub(r'\s*<meta name="robots"[^>]*/?>', "", content)
-
         with open(html_path, "w", encoding="utf-8") as f:
             f.write(content)
         log.debug("patch_html_seo: index.html updated")
@@ -363,15 +400,15 @@ def patch_html_seo(page_data: dict):
         log.error("patch_html_seo failed — %s", e)
 
 def patch_html_navigation(nav_data: dict):
-    """Rewrite the <nav class="menu-nav"> block in index.html."""
+    """Rewrite the <nav> block in index.html. Active in local mode only."""
+    if MONGO_URI:
+        return  # Vercel: buildMenuNav() handles nav dynamically from /config.js
     html_path = BASE_DIR / "index.html"
     if not html_path.exists():
-        log.warning("patch_html_navigation: index.html not found — skipping")
         return
     try:
         with open(html_path, "r", encoding="utf-8") as f:
             content = f.read()
-
         links = sorted(
             [l for l in nav_data.get("menuLinks", []) if l.get("visible", True)],
             key=lambda x: x.get("order", 99),
@@ -383,12 +420,10 @@ def patch_html_navigation(nav_data: dict):
                 f'<span class="menu-link-inner">{link["label"]}</span></a>\n'
             )
         nav_html += "    </nav>"
-
         content = re.sub(
             r'<nav class="menu-nav"[^>]*>.*?</nav>',
             nav_html, content, flags=re.DOTALL,
         )
-
         footer_links = [l for l in nav_data.get("footerLinks", []) if l.get("visible", True)]
         footer_html = '<div class="menu-footer">\n'
         for link in footer_links:
@@ -397,16 +432,13 @@ def patch_html_navigation(nav_data: dict):
                 f'class="menu-footer-link">{link["label"]}</a>\n'
             )
         footer_html += "    </div>"
-
         content = re.sub(
             r'<div class="menu-footer">.*?</div>',
             footer_html, content, flags=re.DOTALL,
         )
-
         with open(html_path, "w", encoding="utf-8") as f:
             f.write(content)
-        log.info("Navigation patched in index.html (%d menu links, %d footer links)",
-                 len(links), len(footer_links))
+        log.info("Navigation patched in index.html")
     except Exception as e:
         log.error("patch_html_navigation failed — %s", e)
 
@@ -414,7 +446,6 @@ def patch_html_navigation(nav_data: dict):
 #  API Routes
 # ══════════════════════════════════════════════════════════════════════════════
 
-# ── Ping / health check ────────────────────────────────────────────────────────
 @app.route("/api/ping", methods=["GET"])
 @require_auth
 def api_ping():
@@ -422,13 +453,13 @@ def api_ping():
         "ok":    True,
         "time":  datetime.now().isoformat(),
         "debug": DEBUG_MODE,
+        "mode":  "mongodb" if MONGO_URI else "local",
     })
 
 # ── Settings ───────────────────────────────────────────────────────────────────
 @app.route("/api/settings", methods=["GET"])
 @require_auth
 def api_get_settings():
-    log.debug("GET /api/settings")
     return jsonify(read_json("site.json") or {})
 
 @app.route("/api/settings", methods=["PUT"])
@@ -477,9 +508,7 @@ def api_update_project(pid):
             projects[i] = data
             write_json("projects.json", projects)
             regenerate_config_js()
-            log.info("Project updated: id=%d", pid)
             return jsonify(data)
-    log.warning("Project not found: id=%d", pid)
     abort(404)
 
 @app.route("/api/projects/<int:pid>", methods=["DELETE"])
@@ -489,11 +518,9 @@ def api_delete_project(pid):
     before = len(projects)
     projects = [p for p in projects if p["id"] != pid]
     if len(projects) == before:
-        log.warning("Project delete: id=%d not found", pid)
         abort(404)
     write_json("projects.json", projects)
     regenerate_config_js()
-    log.info("Project deleted: id=%d", pid)
     return jsonify({"ok": True})
 
 @app.route("/api/projects/reorder", methods=["POST"])
@@ -509,7 +536,6 @@ def api_reorder_projects():
     reordered += [p for p in projects if p["id"] not in seen]
     write_json("projects.json", reordered)
     regenerate_config_js()
-    log.info("Projects reordered")
     return jsonify({"ok": True})
 
 # ── Pages ──────────────────────────────────────────────────────────────────────
@@ -526,9 +552,7 @@ def api_get_page(page_id):
     pages = read_json("pages.json") or []
     page  = next((p for p in pages if p["id"] == page_id), None)
     if not page:
-        log.warning("GET /api/pages/%s — not found", page_id)
         abort(404)
-    log.debug("GET /api/pages/%s — OK", page_id)
     return jsonify(page)
 
 @app.route("/api/pages/<page_id>", methods=["PUT"])
@@ -541,7 +565,6 @@ def api_update_page(page_id):
     for i, p in enumerate(pages):
         if p["id"] == page_id:
             data["id"] = page_id
-            # Enforce single home page — unset isHome on all others
             if data.get("isHome"):
                 for j, other in enumerate(pages):
                     if other["id"] != page_id and other.get("isHome"):
@@ -550,9 +573,8 @@ def api_update_page(page_id):
             write_json("pages.json", pages)
             regenerate_config_js()
             patch_html_seo(data)
-            log.info("Page updated: %s (%r, isHome=%s)", page_id, data.get("title"), data.get("isHome", False))
+            log.info("Page updated: %s", page_id)
             return jsonify(data)
-    log.warning("PUT /api/pages/%s — not found", page_id)
     abort(404)
 
 @app.route("/api/pages", methods=["POST"])
@@ -564,7 +586,6 @@ def api_create_page():
         return jsonify({"error": "Invalid payload — expected JSON object"}), 400
     if not data.get("title", "").strip():
         return jsonify({"error": "title is required"}), 400
-
     existing_ids = {p["id"] for p in pages}
     raw_id  = re.sub(r"[^a-z0-9-]", "-", data.get("id", "new-page").lower()).strip("-")
     new_id  = raw_id
@@ -587,7 +608,7 @@ def api_create_page():
     })
     pages.append(data)
     write_json("pages.json", pages)
-    log.info("Page created: %s (%r, template=%r)", new_id, data.get("title"), data.get("template"))
+    log.info("Page created: %s", new_id)
     return jsonify(data), 201
 
 @app.route("/api/pages/<page_id>/duplicate", methods=["POST"])
@@ -596,9 +617,7 @@ def api_duplicate_page(page_id):
     pages    = read_json("pages.json") or []
     original = next((p for p in pages if p["id"] == page_id), None)
     if not original:
-        log.warning("Duplicate: page %s not found", page_id)
         abort(404)
-
     new_page            = copy.deepcopy(original)
     new_page["title"]   = original["title"] + " (Copy)"
     new_page["slug"]    = original.get("slug", page_id) + "-copy"
@@ -607,16 +626,14 @@ def api_duplicate_page(page_id):
     new_page["isHome"]  = False
     new_page["seo"]     = copy.deepcopy(original.get("seo", {}))
     new_page["seo"]["pageTitle"] = new_page["title"]
-
     existing_ids = {p["id"] for p in pages}
-    base_id  = page_id + "-copy"
-    new_id   = base_id
-    counter  = 1
+    base_id = page_id + "-copy"
+    new_id  = base_id
+    counter = 1
     while new_id in existing_ids:
         new_id = f"{base_id}-{counter}"
         counter += 1
     new_page["id"] = new_id
-
     pages.append(new_page)
     write_json("pages.json", pages)
     log.info("Page duplicated: %s → %s", page_id, new_id)
@@ -626,13 +643,11 @@ def api_duplicate_page(page_id):
 @require_auth
 def api_delete_page(page_id):
     if page_id in CORE_PAGES:
-        log.warning("Attempted delete of core page: %s", page_id)
         return jsonify({"error": f"Cannot delete core page '{page_id}'"}), 403
-    pages = read_json("pages.json") or []
+    pages  = read_json("pages.json") or []
     before = len(pages)
-    pages = [p for p in pages if p["id"] != page_id]
+    pages  = [p for p in pages if p["id"] != page_id]
     if len(pages) == before:
-        log.warning("DELETE /api/pages/%s — not found", page_id)
         abort(404)
     write_json("pages.json", pages)
     log.info("Page deleted: %s", page_id)
@@ -642,7 +657,6 @@ def api_delete_page(page_id):
 @app.route("/api/navigation", methods=["GET"])
 @require_auth
 def api_get_navigation():
-    log.debug("GET /api/navigation")
     return jsonify(read_json("navigation.json") or {})
 
 @app.route("/api/navigation", methods=["PUT"])
@@ -657,7 +671,7 @@ def api_update_navigation():
     # Sync visibility flags to pages.json so CONFIG.menuPages stays consistent
     menu_links = data.get("menuLinks", [])
     if menu_links:
-        pages = read_json("pages.json") or []
+        pages   = read_json("pages.json") or []
         nav_map = {l["pageId"]: bool(l.get("visible", True)) for l in menu_links if l.get("pageId")}
         changed = False
         for i, p in enumerate(pages):
@@ -665,7 +679,7 @@ def api_update_navigation():
                 new_in_menu = nav_map[p["id"]]
                 if bool(p.get("inMenu")) != new_in_menu:
                     pages[i] = {**p, "inMenu": new_in_menu}
-                    changed = True
+                    changed  = True
         if changed:
             write_json("pages.json", pages)
             try:
@@ -677,7 +691,7 @@ def api_update_navigation():
 
 # ── Image Library ──────────────────────────────────────────────────────────────
 def _next_image_id() -> str:
-    images = read_json("images.json") or []
+    images   = read_json("images.json") or []
     existing = {img.get("id", "") for img in images}
     for n in range(1, 10000):
         candidate = f"img{n:03d}"
@@ -698,7 +712,7 @@ def api_library_add():
     data = request.get_json(force=True)
     if not data.get("url"):
         return jsonify({"error": "url is required"}), 400
-    images = read_json("images.json") or []
+    images  = read_json("images.json") or []
     new_img = {
         "id":         _next_image_id(),
         "url":        data["url"],
@@ -709,14 +723,14 @@ def api_library_add():
     }
     images.append(new_img)
     write_json("images.json", images)
-    log.info("Library: image added via URL — id=%s url=%s", new_img["id"], new_img["url"])
+    log.info("Library: image added — id=%s", new_img["id"])
     return jsonify(new_img), 201
 
 @app.route("/api/library/<img_id>", methods=["PUT"])
 @require_auth
 def api_library_update(img_id):
     images = read_json("images.json") or []
-    data = request.get_json(force=True)
+    data   = request.get_json(force=True)
     for i, img in enumerate(images):
         if img["id"] == img_id:
             img["alt"]        = data.get("alt",        img.get("alt", ""))
@@ -727,22 +741,19 @@ def api_library_update(img_id):
             images[i] = img
             write_json("images.json", images)
             regenerate_config_js()
-            log.info("Library: image updated — id=%s", img_id)
             return jsonify(img)
-    log.warning("Library: image not found for update — id=%s", img_id)
     abort(404)
 
 @app.route("/api/library/<img_id>", methods=["DELETE"])
 @require_auth
 def api_library_delete(img_id):
-    images = read_json("images.json") or []
+    images   = read_json("images.json") or []
     original = len(images)
-    images = [img for img in images if img["id"] != img_id]
+    images   = [img for img in images if img["id"] != img_id]
     if len(images) == original:
-        log.warning("Library: image not found for delete — id=%s", img_id)
         abort(404)
     write_json("images.json", images)
-    pages = read_json("pages.json") or []
+    pages   = read_json("pages.json") or []
     changed = False
     removed_from = []
     for page in pages:
@@ -753,7 +764,6 @@ def api_library_delete(img_id):
             removed_from.append(page["id"])
     if changed:
         write_json("pages.json", pages)
-        log.debug("Library delete: removed %s from galleries: %s", img_id, removed_from)
     regenerate_config_js()
     log.info("Library: image deleted — id=%s (removed from %d pages)", img_id, len(removed_from))
     return jsonify({"ok": True, "removedFromPages": removed_from})
@@ -761,20 +771,17 @@ def api_library_delete(img_id):
 @app.route("/api/upload", methods=["POST"])
 @require_auth
 def api_upload():
-    """Upload a file, save to uploads/, register in the image library."""
+    """Upload a file. Note: on Vercel uploads are ephemeral — prefer URL-based images."""
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
     file = request.files["file"]
     if not file.filename:
         return jsonify({"error": "Empty filename"}), 400
-
     ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
     if ext not in ALLOWED_EXTENSIONS:
-        log.warning("Upload rejected: unsupported extension .%s (file: %s)", ext, file.filename)
         return jsonify({
-            "error": f"File type .{ext} is not allowed. Accepted: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+            "error": f"File type .{ext} not allowed. Accepted: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
         }), 400
-
     try:
         from werkzeug.utils import secure_filename
         safe  = secure_filename(file.filename)
@@ -783,7 +790,6 @@ def api_upload():
         file.save(str(path))
         size  = path.stat().st_size
         url   = f"/uploads/{name}"
-
         images = read_json("images.json") or []
         alt = file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ").title()
         new_img = {
@@ -797,32 +803,24 @@ def api_upload():
         }
         images.append(new_img)
         write_json("images.json", images)
-
-        log.info("Upload: %s → %s (id=%s, %.1f KB)", file.filename, name, new_img["id"], size / 1024)
+        log.info("Upload: %s → %s (%.1f KB)", file.filename, name, size / 1024)
         return jsonify({"url": url, "filename": name, "imageId": new_img["id"], "image": new_img}), 201
-
     except Exception as e:
-        log.error("Upload failed for %s — %s: %s", file.filename, type(e).__name__, e)
-        if DEBUG_MODE:
-            log.debug(traceback.format_exc())
+        log.error("Upload failed — %s: %s", type(e).__name__, e)
         return jsonify({"error": f"Upload failed: {str(e)}"}), 500
 
 @app.route("/api/upload/<filename>", methods=["DELETE"])
 @require_auth
 def api_delete_upload(filename):
-    """Delete an uploaded file from disk (does not remove from library)."""
     try:
         from werkzeug.utils import secure_filename
         safe = secure_filename(filename)
         path = UPLOAD_DIR / safe
         if path.exists() and path.is_file():
             path.unlink()
-            log.info("Upload file deleted from disk: %s", safe)
             return jsonify({"ok": True})
-        log.warning("Delete upload: file not found — %s", safe)
         abort(404)
     except Exception as e:
-        log.error("Delete upload failed for %s — %s", filename, e)
         return jsonify({"error": str(e)}), 500
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -832,16 +830,31 @@ def api_delete_upload(filename):
 def serve_index():
     return send_file(str(BASE_DIR / "index.html"))
 
+@app.route("/config.js")
+def serve_config_js():
+    """
+    Serve config.js dynamically from current data.
+    - Vercel mode: always fresh from MongoDB.
+    - Local mode: also fresh from files (bypasses cached static file).
+    """
+    try:
+        content = _build_config_content()
+        return Response(content, mimetype="application/javascript",
+                        headers={"Cache-Control": "no-store"})
+    except Exception as e:
+        log.error("serve_config_js failed — %s", e)
+        return Response(
+            "// Error generating config.js — check server logs\nconst CONFIG = {};",
+            mimetype="application/javascript",
+            status=500,
+        )
+
 @app.route("/admin")
 def serve_admin_redirect():
-    """Redirect /admin → /admin/ so relative asset paths (style.css, app.js) resolve correctly."""
     return redirect("/admin/", code=301)
 
 @app.route("/admin/")
 def serve_admin():
-    """Serve the admin SPA shell — no auth required at HTML level.
-    Authentication is handled entirely by JavaScript (X-Admin-Password header).
-    """
     return send_file(str(ADMIN_DIR / "index.html"))
 
 @app.route("/uploads/<path:filename>")
@@ -858,32 +871,31 @@ def serve_static(filename):
     abort(404)
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  Startup
+#  Startup (local dev only — Vercel uses the module directly)
 # ══════════════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
-    missing = [f for f in ("site.json", "projects.json", "pages.json", "navigation.json", "images.json")
-               if not (DATA_DIR / f).exists()]
-    if missing:
-        log.warning("Missing data files: %s — check setup docs.", ", ".join(missing))
+    mode_label = "MongoDB" if MONGO_URI else "local files"
 
-    mode_label = "DEBUG" if DEBUG_MODE else "production"
+    if not MONGO_URI:
+        missing = [f for f in ("site.json", "projects.json", "pages.json", "navigation.json", "images.json")
+                   if not (DATA_DIR / f).exists()]
+        if missing:
+            log.warning("Missing data files: %s", ", ".join(missing))
+        regenerate_config_js()
+        log.info("config.js regenerated on startup")
+    else:
+        log.info("MongoDB mode — config.js served dynamically")
+
+    debug_label = "DEBUG" if DEBUG_MODE else "production"
     print("\n" + "─" * 56)
     print("  Portfolio Admin Server")
     print("─" * 56)
     print(f"  Portfolio : http://localhost:8080/")
     print(f"  Admin     : http://localhost:8080/admin/")
     print(f"  Password  : {ADMIN_PASSWORD}")
-    print(f"  Mode      : {mode_label}")
-    if DEBUG_MODE:
-        print(f"  Logging   : DEBUG (verbose — set DEBUG=0 to silence)")
-    else:
-        print(f"  Logging   : INFO  (set DEBUG=1 for verbose output)")
+    print(f"  Data      : {mode_label}")
+    print(f"  Mode      : {debug_label}")
+    print(f"  Logging   : {'DEBUG' if DEBUG_MODE else 'INFO'}")
     print("─" * 56 + "\n")
 
-    log.info("Server starting — debug=%s", DEBUG_MODE)
-    try:
-        regenerate_config_js()
-        log.info("config.js regenerated on startup")
-    except Exception as e:
-        log.warning("Startup config.js regeneration failed — %s", e)
-    app.run(host="0.0.0.0", port=8080, debug=False, use_reloader=False)
+    app.run(host="0.0.0.0", port=8080, debug=DEBUG_MODE)

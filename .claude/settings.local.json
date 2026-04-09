@@ -81,7 +81,15 @@
       "Bash(find /Users/juanrozo/Desktop/New -name *.json -not -path */node_modules/* -not -path */.git/*)",
       "Bash(pkill -f \"python3.*server.py\")",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git tag:*)",
+      "Bash(timeout 5 python3 server.py)",
+      "Bash(python3 server.py)",
+      "Bash(curl -s -u :portfolio2026 http://localhost:8080/api/ping)",
+      "Bash(curl -s http://localhost:8080/config.js)",
+      "Bash(kill 92962)",
+      "Bash(python3 /Users/juanrozo/Desktop/New/server.py)"
     ]
   }
 }
