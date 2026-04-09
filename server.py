@@ -26,8 +26,11 @@ from flask import Flask, abort, jsonify, redirect, request, send_file, send_from
 # ── Paths ──────────────────────────────────────────────────────────────────────
 BASE_DIR   = Path(__file__).parent
 DATA_DIR   = BASE_DIR / "data"
-UPLOAD_DIR = BASE_DIR / "uploads"
 ADMIN_DIR  = BASE_DIR / "admin"
+
+# On Vercel the task directory is read-only; use /tmp for uploads
+_MONGO_URI_CHECK = os.environ.get("MONGO_URI", "")
+UPLOAD_DIR = Path("/tmp/uploads") if _MONGO_URI_CHECK else BASE_DIR / "uploads"
 
 DATA_DIR.mkdir(exist_ok=True)
 UPLOAD_DIR.mkdir(exist_ok=True)
