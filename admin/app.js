@@ -1276,18 +1276,18 @@ async function renderNavigation() {
     menuPages.forEach((p, i) => { p.menuOrder = i + 1; });
 
     try {
-      // Save each page where inMenu or menuOrder changed
-      const pageUpdates = menuPages
-        .filter(p => {
-          const orig = origState.get(p.id);
-          return !orig || orig.inMenu !== !!p.inMenu || orig.menuOrder !== p.menuOrder;
-        })
-        .map(p => api.put(`/api/pages/${p.id}`, p));
+      // Save each page where inMenu or menuOrder changed — sequential to avoid race conditions
+      // (all pages share a single MongoDB document; parallel writes overwrite each other)
+      const changedPages = menuPages.filter(p => {
+        const orig = origState.get(p.id);
+        return !orig || orig.inMenu !== !!p.inMenu || orig.menuOrder !== p.menuOrder;
+      });
+      for (const p of changedPages) {
+        await api.put(`/api/pages/${p.id}`, p);
+      }
 
       // Save footer links (pass empty menuLinks so server doesn't overwrite inMenu we just set)
-      const footerUpdate = api.put('/api/navigation', { menuLinks: [], footerLinks });
-
-      await Promise.all([...pageUpdates, footerUpdate]);
+      await api.put('/api/navigation', { menuLinks: [], footerLinks });
 
       // Update origState so subsequent saves only send real changes
       menuPages.forEach(p => origState.set(p.id, { inMenu: !!p.inMenu, menuOrder: p.menuOrder }));
