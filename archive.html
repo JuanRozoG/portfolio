@@ -11,52 +11,15 @@
     :root {
       --font-display: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
       --fw: 900;
-      --color-red: #ff3232;
     }
     body {
-      margin: 0; padding: 0;
+      margin: 0; padding: 60px 24px;
       background: #0a0a0a;
       color: #fff;
       font-family: var(--font-display);
       font-weight: var(--fw);
       -webkit-font-smoothing: antialiased;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .archive-title {
-      font-size: 11px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.35);
-      margin: 0 0 48px;
-    }
-
-    .archive-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .archive-list a {
-      font-size: clamp(28px, 5vw, 48px);
-      font-weight: 900;
-      letter-spacing: -1.5px;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.5);
-      text-decoration: none;
-      transition: color 0.2s;
-      line-height: 1.1;
-    }
-    .archive-list a:hover {
-      color: #fff;
     }
 
     .archive-back {
@@ -70,21 +33,145 @@
       transition: color 0.2s;
       font-family: var(--font-display);
       font-weight: 900;
+      z-index: 10;
     }
     .archive-back:hover { color: #fff; }
+
+    .archive-header {
+      margin-top: 40px;
+      margin-bottom: 48px;
+    }
+    .archive-title {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin: 0;
+    }
+
+    .archive-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .archive-list li {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 10px 0;
+    }
+    .archive-list li:last-child {
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .archive-list a {
+      font-size: clamp(22px, 3.5vw, 36px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      text-decoration: none;
+      transition: color 0.15s;
+      line-height: 1.15;
+      flex: 1;
+    }
+    .archive-list a:hover { color: #fff; }
+
+    .page-template {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.2);
+      white-space: nowrap;
+    }
+
+    .status-badge {
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #ff3232;
+      border: 1px solid rgba(255,50,50,0.4);
+      border-radius: 3px;
+      padding: 1px 5px;
+      white-space: nowrap;
+    }
+
+    .archive-count {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.2);
+      margin-top: 32px;
+    }
   </style>
 </head>
 <body>
-  <a href="index.html" class="archive-back">&larr; Back to site</a>
+  <a href="/" class="archive-back">&larr; Back to site</a>
 
-  <p class="archive-title">Archive</p>
+  <div class="archive-header">
+    <p class="archive-title">All pages</p>
+  </div>
 
-  <ul class="archive-list">
-    <li><a href="archive-intro-v1.html">Intro v1</a></li>
-    <li><a href="archive-personal-v1.html">Personal v1</a></li>
-    <li><a href="archive-intro-loader-v1.html">Intro — stagger loader (before stack)</a></li>
-    <li><a href="/#archive">Hidden Gallery</a></li>
-    <li><a href="archive-filmstrip-v1.html">Filmstrip v1</a></li>
+  <ul class="archive-list" id="archive-list">
+    <!-- populated dynamically from config.js -->
   </ul>
+
+  <p class="archive-count" id="archive-count"></p>
+
+  <script src="config.js"></script>
+  <script>
+    (function () {
+      var list  = document.getElementById('archive-list');
+      var count = document.getElementById('archive-count');
+      var pages = (typeof CONFIG !== 'undefined' && CONFIG.allPages) ? CONFIG.allPages : [];
+
+      if (!pages.length) {
+        list.innerHTML = '<li><span style="color:rgba(255,255,255,0.3);font-size:14px">No pages found.</span></li>';
+        return;
+      }
+
+      pages.forEach(function (page) {
+        // Resolve URL: standalone .html files use id as filename; SPA pages use hash
+        var href;
+        if (page.template === 'archive-standalone' || page.template === 'filmstrip') {
+          href = '/' + page.id + '.html';
+        } else {
+          href = '/#' + page.id;
+        }
+
+        var li  = document.createElement('li');
+
+        var a   = document.createElement('a');
+        a.href  = href;
+        a.textContent = page.title || page.id;
+        li.appendChild(a);
+
+        // Template tag
+        if (page.template) {
+          var tpl = document.createElement('span');
+          tpl.className   = 'page-template';
+          tpl.textContent = page.template;
+          li.appendChild(tpl);
+        }
+
+        // Draft badge (only for non-published)
+        if (page.status && page.status !== 'published') {
+          var badge = document.createElement('span');
+          badge.className   = 'status-badge';
+          badge.textContent = page.status;
+          li.appendChild(badge);
+        }
+
+        list.appendChild(li);
+      });
+
+      count.textContent = pages.length + ' page' + (pages.length !== 1 ? 's' : '');
+    })();
+  </script>
 </body>
 </html>

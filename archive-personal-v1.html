@@ -308,7 +308,10 @@
 
   <script src="config.js"></script>
   <script>
-    document.getElementById('v1-personal-name').textContent = CONFIG.name;
+    // Use the page title from CONFIG.allPages — avoids duplicating the fixed site logo.
+    // Falls back to CONFIG.name only if allPages is unavailable.
+    var _thisPage = (CONFIG.allPages || []).find(function(p) { return p.id === 'archive-personal-v1'; });
+    document.getElementById('v1-personal-name').textContent = (_thisPage && _thisPage.title) ? _thisPage.title : 'Personal';
 
     const scrollEl = document.getElementById('v1-personal-scroll');
     const thumbsNav = document.getElementById('v1-personal-thumbs');
@@ -550,7 +553,7 @@
           closeMenu();
           setTimeout(function() {
             if (tpl === 'archive-standalone' || tpl === 'filmstrip') {
-              window.location.href = '/' + slug + '.html';
+              window.location.href = '/' + id + '.html';
             } else {
               window.location.href = '/#' + id;
             }

@@ -340,6 +340,21 @@ def _build_config_content() -> str:
             ensure_ascii=False
         ) + ",",
         "",
+        "  // ── All pages index (every page, regardless of status / inMenu) ────",
+        "  allPages: " + json.dumps(
+            [
+                {
+                    "id":       p["id"],
+                    "title":    p.get("title", p["id"]),
+                    "slug":     p.get("slug", p["id"]),
+                    "template": p.get("template", ""),
+                    "status":   p.get("status", "draft"),
+                }
+                for p in pages if p.get("id")
+            ],
+            ensure_ascii=False
+        ) + ",",
+        "",
         "  // ── Page galleries (source of truth for all portfolio pages) ──",
         "  pageGalleries: {",
     ]

@@ -651,6 +651,18 @@
           // Switch content while covered
           showPage(targetPage);
 
+          // Update URL so reload returns to this page.
+          // Use replaceState (no new history entry) — back button exits the site.
+          // Opening/closing the menu never calls navigateTo(), so no URL change there.
+          {
+            const homeId = (typeof CONFIG !== 'undefined' && CONFIG.homePage) ? CONFIG.homePage : 'intro';
+            if (targetPage === homeId) {
+              history.replaceState(null, '', location.pathname || '/');
+            } else {
+              history.replaceState(null, '', '#' + targetPage);
+            }
+          }
+
           // Phase 2: slide away
           requestAnimationFrame(() => {
             overlay.classList.remove('wipe-in');
@@ -1896,7 +1908,9 @@
           const id   = link.dataset.page;
           closeMenu();
           if (tpl === 'archive-standalone' || tpl === 'filmstrip') {
-            setTimeout(() => { window.location.href = '/' + slug + '.html'; }, 120);
+            // Use page id (not slug) — static .html files are named after the immutable page id.
+            // Slug is metadata only; changing it in admin must never break the file path.
+            setTimeout(() => { window.location.href = '/' + id + '.html'; }, 120);
           } else {
             setTimeout(() => navigateTo(id), 100);
           }
@@ -2008,14 +2022,24 @@
       if (e.key === 'ArrowLeft')  { e.preventDefault(); navigateArchiveZoom(-1); }
     });
 
-    // Hash-based deep linking — e.g. /#people, /#things, /#info
-    // Allows menu links on standalone archive pages to deep-link into the SPA.
+    // Hash-based deep linking — e.g. /#people, /#things, /#personal-v2
+    // Also resolves slug-based hashes (e.g. /#personal → personal-v2) so that
+    // old bookmarks or external links using the slug still land correctly.
     if (location.hash) {
       const hashPage = location.hash.slice(1); // strip the leading #
+
       if (pages.includes(hashPage)) {
+        // Direct id match — show it
         showPage(hashPage);
       } else {
-        showPage(currentPage); // unknown hash — fall back to home
+        // Try to find a page whose slug matches the hash
+        const bySlug = (typeof CONFIG !== 'undefined' && CONFIG.allPages || [])
+          .find(p => (p.slug || p.id) === hashPage && pages.includes(p.id));
+        if (bySlug) {
+          showPage(bySlug.id);
+        } else {
+          showPage(currentPage); // unknown hash — fall back to home
+        }
       }
     } else {
       // CMS-assigned home page — always show the configured home at /

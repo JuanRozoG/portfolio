@@ -1385,7 +1385,7 @@
           const id   = link.dataset.page;
           closeMenu();
           if (tpl === 'archive-standalone' || tpl === 'filmstrip') {
-            setTimeout(() => { window.location.href = '/' + slug + '.html'; }, 120);
+            setTimeout(() => { window.location.href = '/' + id + '.html'; }, 120);
           } else {
             setTimeout(() => navigateTo(id), 100);
           }
