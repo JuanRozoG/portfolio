@@ -59,9 +59,11 @@ if (DEBUG) {
 
 // ── Auth ────────────────────────────────────────────────────────────────────
 let authPassword = sessionStorage.getItem('cms_auth') || '';
+let authEmail    = sessionStorage.getItem('cms_auth_email') || '';
 
 function getHeaders(isUpload = false) {
   const h = { 'X-Admin-Password': authPassword };
+  if (authEmail) h['X-Admin-Email'] = authEmail;
   if (!isUpload) h['Content-Type'] = 'application/json';
   return h;
 }
@@ -187,7 +189,9 @@ function showApp() {
 
 function logout() {
   sessionStorage.removeItem('cms_auth');
+  sessionStorage.removeItem('cms_auth_email');
   authPassword = '';
+  authEmail    = '';
   showLogin();
 }
 
@@ -242,18 +246,22 @@ async function init() {
 
 document.getElementById('login-form').addEventListener('submit', async e => {
   e.preventDefault();
-  const pw  = document.getElementById('login-password').value;
-  const err = document.getElementById('login-error');
+  const pw    = document.getElementById('login-password').value;
+  const email = (document.getElementById('login-email')?.value || '').trim();
+  const err   = document.getElementById('login-error');
   authPassword = pw;
+  authEmail    = email;
   try {
     await api.get('/api/ping');
     sessionStorage.setItem('cms_auth', pw);
+    if (email) sessionStorage.setItem('cms_auth_email', email);
     err.classList.add('hidden');
     const ok = await checkServerVersion();
     if (ok) showApp();
   } catch {
     err.classList.remove('hidden');
     authPassword = '';
+    authEmail    = '';
   }
 });
 

@@ -37,6 +37,7 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 ADMIN_PASSWORD     = os.environ.get("ADMIN_PASSWORD", "portfolio2026")
+ADMIN_USERNAME     = os.environ.get("ADMIN_USERNAME", "")   # if set, both email AND password are required
 DEBUG_MODE         = os.environ.get("DEBUG", "false").lower() in ("1", "true", "yes")
 MONGO_URI          = os.environ.get("MONGO_URI", "")          # Set on Vercel; empty = local file mode
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp", "svg", "avif"}
@@ -61,12 +62,30 @@ app = Flask(__name__, static_folder=None)
 
 # ── Auth ───────────────────────────────────────────────────────────────────────
 def _authorized():
-    if request.headers.get("X-Admin-Password") == ADMIN_PASSWORD:
-        return True
-    auth = request.authorization
-    if auth and auth.password == ADMIN_PASSWORD:
-        return True
-    return False
+    """
+    When ADMIN_USERNAME is set, BOTH email (X-Admin-Email) and password are required.
+    When ADMIN_USERNAME is empty, password alone is sufficient (backward-compatible).
+    """
+    pw_ok       = request.headers.get("X-Admin-Password") == ADMIN_PASSWORD
+    email_given = request.headers.get("X-Admin-Email", "").strip().lower()
+    if ADMIN_USERNAME:
+        # strict mode: require matching email + password
+        email_ok = email_given == ADMIN_USERNAME.strip().lower()
+        if pw_ok and email_ok:
+            return True
+        # Also support HTTP Basic Auth: username=email, password=password
+        auth = request.authorization
+        if auth and auth.password == ADMIN_PASSWORD and auth.username.strip().lower() == ADMIN_USERNAME.strip().lower():
+            return True
+        return False
+    else:
+        # password-only mode (legacy)
+        if pw_ok:
+            return True
+        auth = request.authorization
+        if auth and auth.password == ADMIN_PASSWORD:
+            return True
+        return False
 
 def require_auth(f):
     @wraps(f)
