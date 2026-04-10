@@ -653,13 +653,15 @@
 
           // Update URL so reload returns to this page.
           // Use replaceState (no new history entry) — back button exits the site.
-          // Opening/closing the menu never calls navigateTo(), so no URL change there.
+          // All SPA pages get a clean /slug URL (no hash, no .html extension).
           {
             const homeId = (typeof CONFIG !== 'undefined' && CONFIG.homePage) ? CONFIG.homePage : 'intro';
             if (targetPage === homeId) {
-              history.replaceState(null, '', location.pathname || '/');
+              history.replaceState(null, '', '/');
             } else {
-              history.replaceState(null, '', '#' + targetPage);
+              const _pg   = (typeof CONFIG !== 'undefined' && CONFIG.allPages || []).find(p => p.id === targetPage);
+              const _slug = (_pg && _pg.slug) ? _pg.slug : targetPage;
+              history.replaceState(null, '', '/' + _slug);
             }
           }
 
@@ -1908,9 +1910,8 @@
           const id   = link.dataset.page;
           closeMenu();
           if (tpl === 'archive-standalone' || tpl === 'filmstrip') {
-            // Use page id (not slug) — static .html files are named after the immutable page id.
-            // Slug is metadata only; changing it in admin must never break the file path.
-            setTimeout(() => { window.location.href = '/' + id + '.html'; }, 120);
+            // Use /slug clean URL — server resolves slug → physical id.html file.
+            setTimeout(() => { window.location.href = '/' + (slug || id); }, 120);
           } else {
             setTimeout(() => navigateTo(id), 100);
           }
@@ -2022,28 +2023,34 @@
       if (e.key === 'ArrowLeft')  { e.preventDefault(); navigateArchiveZoom(-1); }
     });
 
-    // Hash-based deep linking — e.g. /#people, /#things, /#personal-v2
-    // Also resolves slug-based hashes (e.g. /#personal → personal-v2) so that
-    // old bookmarks or external links using the slug still land correctly.
-    if (location.hash) {
-      const hashPage = location.hash.slice(1); // strip the leading #
+    // Pathname-based deep linking — e.g. /people, /things, /personal-work
+    // Resolves /slug → correct SPA section via CONFIG.allPages.
+    // Also handles legacy /#hash URLs for backward compat with old bookmarks.
+    {
+      const _allPages = (typeof CONFIG !== 'undefined' && CONFIG.allPages) || [];
+      // Strip leading / and trailing /
+      const _pathSlug = location.pathname.replace(/^\/+|\/+$/g, '');
 
-      if (pages.includes(hashPage)) {
-        // Direct id match — show it
-        showPage(hashPage);
-      } else {
-        // Try to find a page whose slug matches the hash
-        const bySlug = (typeof CONFIG !== 'undefined' && CONFIG.allPages || [])
-          .find(p => (p.slug || p.id) === hashPage && pages.includes(p.id));
-        if (bySlug) {
-          showPage(bySlug.id);
-        } else {
-          showPage(currentPage); // unknown hash — fall back to home
-        }
+      function _resolveAndShow(slug) {
+        // 1. Direct id match (slug === internal page id)
+        if (pages.includes(slug)) { showPage(slug); return true; }
+        // 2. Slug field match → map to id
+        const bySlug = _allPages.find(p => (p.slug || p.id) === slug && pages.includes(p.id));
+        if (bySlug) { showPage(bySlug.id); return true; }
+        return false;
       }
-    } else {
-      // CMS-assigned home page — always show the configured home at /
-      showPage(currentPage);
+
+      if (_pathSlug) {
+        // Arriving at a clean URL like /people or /personal-work
+        if (!_resolveAndShow(_pathSlug)) showPage(currentPage);
+      } else if (location.hash) {
+        // Legacy /#hash support — redirect to clean URL
+        const hashPage = location.hash.slice(1);
+        if (!_resolveAndShow(hashPage)) showPage(currentPage);
+      } else {
+        // Root / — show configured home page
+        showPage(currentPage);
+      }
     }
 
   })();

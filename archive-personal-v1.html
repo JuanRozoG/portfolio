@@ -60,19 +60,7 @@
       width: 100%;
     }
     .v1-personal-title-bar {
-      padding: 60px 24px 14px;
-      flex-shrink: 0;
-    }
-    .v1-personal-title-bar h2 {
-      font-family: var(--font-display);
-      font-size: 23px;
-      font-weight: 900;
-      letter-spacing: -0.92px;
-      text-transform: uppercase;
-      color: #0a0a0a;
-      margin: 0;
-      opacity: 0;
-      animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+      display: none;
     }
     .v1-personal-scroll {
       flex: 1;
@@ -552,11 +540,8 @@
           var id   = link.dataset.page;
           closeMenu();
           setTimeout(function() {
-            if (tpl === 'archive-standalone' || tpl === 'filmstrip') {
-              window.location.href = '/' + id + '.html';
-            } else {
-              window.location.href = '/#' + id;
-            }
+            // All pages use /slug clean URLs — server resolves to correct content
+            window.location.href = '/' + (slug || id);
           }, 120);
         });
       });

@@ -905,11 +905,35 @@ def serve_upload(filename):
 
 @app.route("/<path:filename>")
 def serve_static(filename):
-    path = BASE_DIR / filename
-    if not path.resolve().is_relative_to(BASE_DIR.resolve()):
+    try:
+        path = (BASE_DIR / filename).resolve()
+        if not path.is_relative_to(BASE_DIR.resolve()):
+            abort(403)
+    except Exception:
         abort(403)
+    # Serve exact static file if it exists
     if path.is_file():
         return send_from_directory(str(BASE_DIR), filename)
+    # ── Slug-based routing ──────────────────────────────────────
+    # Allows clean URLs like /people, /personal-work, /archive-v1
+    # regardless of whether the slug matches the internal page id.
+    slug = filename.rstrip('/')
+    pages = read_json("pages.json") or []
+    # 1. Match by slug field first, then fall back to id
+    page = next((p for p in pages if p.get("slug", p.get("id", "")) == slug), None)
+    if page is None:
+        page = next((p for p in pages if p.get("id", "") == slug), None)
+    if page:
+        template = page.get("template", "")
+        page_id  = page["id"]
+        if template in ("archive-standalone", "filmstrip"):
+            # Standalone pages have a physical .html file named after their id
+            html_path = BASE_DIR / f"{page_id}.html"
+            if html_path.is_file():
+                return send_file(str(html_path))
+        else:
+            # SPA pages — serve index.html; JS reads location.pathname to pick the right section
+            return send_file(str(BASE_DIR / "index.html"))
     abort(404)
 
 # ══════════════════════════════════════════════════════════════════════════════

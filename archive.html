@@ -136,13 +136,10 @@
       }
 
       pages.forEach(function (page) {
-        // Resolve URL: standalone .html files use id as filename; SPA pages use hash
-        var href;
-        if (page.template === 'archive-standalone' || page.template === 'filmstrip') {
-          href = '/' + page.id + '.html';
-        } else {
-          href = '/#' + page.id;
-        }
+        // All pages use /slug clean URL — server resolves to correct content.
+        // Standalone pages get their physical id.html served; SPA pages get index.html.
+        var slug = page.slug || page.id;
+        var href = '/' + slug;
 
         var li  = document.createElement('li');
 

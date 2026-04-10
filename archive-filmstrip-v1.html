@@ -584,11 +584,8 @@
         const id   = link.dataset.page;
         closeMenu();
         setTimeout(() => {
-          if (tpl === 'archive-standalone' || tpl === 'filmstrip') {
-            window.location.href = '/' + id + '.html';
-          } else {
-            window.location.href = '/#' + id;
-          }
+          // All pages use /slug clean URLs — server resolves to correct content
+          window.location.href = '/' + (slug || id);
         }, 120);
       });
     });
