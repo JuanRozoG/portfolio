@@ -123,8 +123,13 @@ def _get_db():
     """Return MongoDB database, creating connection on first call."""
     global _mongo_db
     if _mongo_db is None:
+        import certifi
         from pymongo import MongoClient
-        client  = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        client  = MongoClient(
+            MONGO_URI,
+            serverSelectionTimeoutMS=10000,
+            tlsCAFile=certifi.where(),
+        )
         _mongo_db = client["portfolio"]
         log.info("MongoDB connected")
     return _mongo_db
