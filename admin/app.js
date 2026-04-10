@@ -237,6 +237,8 @@ async function init() {
   if (!authPassword) { showLogin(); return; }
   try {
     await api.get('/api/ping');
+    // If a 401 occurred, logout() already cleared authPassword and showed login — stop here.
+    if (!authPassword) return;
     const ok = await checkServerVersion();
     if (ok) showApp();
   } catch {
