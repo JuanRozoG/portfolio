@@ -3,13 +3,15 @@
   "builds": [
     {
       "src": "server.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxDuration": 60
-      }
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     { "src": "/(.*)", "dest": "server.py" }
-  ]
+  ],
+  "functions": {
+    "server.py": {
+      "maxDuration": 60
+    }
+  }
 }
