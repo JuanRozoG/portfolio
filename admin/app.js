@@ -931,49 +931,49 @@ async function renderPageEditor(pageId) {
     btn.disabled = true;
     btn.textContent = 'Guardando…';
 
-    const sections = page.sections.map(s => ({
-      ...s,
-      enabled: document.querySelector(`.section-toggle[data-sid="${s.id}"]`)?.checked ?? s.enabled
-    }));
-
-    // Collect template-specific content fields
-    let contentData;
-    if (page.template === 'intro') {
-      contentData = {
-        tagline:    document.getElementById('pc-tagline')?.value.trim()      || '',
-        footerCta1: document.getElementById('pc-footer-cta1')?.value.trim()  || '',
-        footerCta2: document.getElementById('pc-footer-cta2')?.value.trim()  || '',
-      };
-    } else if (page.template === 'info') {
-      contentData = {
-        label:           document.getElementById('pc-label')?.value.trim()     || '',
-        role:            document.getElementById('pc-role')?.value.trim()      || '',
-        instagram2Label: document.getElementById('pc-ig2-label')?.value.trim() || '',
-        instagram2Url:   document.getElementById('pc-ig2-url')?.value.trim()   || '',
-      };
-    }
-
-    const updated = {
-      ...page,
-      title:      document.getElementById('pe-title').value.trim(),
-      slug:       document.getElementById('pe-slug').value.trim(),
-      menuLabel:  document.getElementById('pe-menulabel').value.trim(),
-      template:   document.getElementById('pe-template').value,
-      status:     document.getElementById('pe-status').value,
-      inMenu:     document.getElementById('pe-inmenu').checked,
-      menuOrder:  parseInt(document.getElementById('pe-menuorder').value) || 0,
-      sections,
-      gallery:    pageGallery,
-      seo: {
-        pageTitle:       document.getElementById('pe-seo-title').value,
-        metaDescription: document.getElementById('pe-seo-desc').value,
-        ogImage:         document.getElementById('pe-seo-og').value,
-        indexable:       document.getElementById('pe-indexable').checked,
-      },
-      ...(contentData !== undefined && { content: contentData }),
-    };
-
     try {
+      const sections = (page.sections || []).map(s => ({
+        ...s,
+        enabled: document.querySelector(`.section-toggle[data-sid="${s.id}"]`)?.checked ?? s.enabled
+      }));
+
+      // Collect template-specific content fields
+      let contentData;
+      if (page.template === 'intro') {
+        contentData = {
+          tagline:    document.getElementById('pc-tagline')?.value.trim()      || '',
+          footerCta1: document.getElementById('pc-footer-cta1')?.value.trim()  || '',
+          footerCta2: document.getElementById('pc-footer-cta2')?.value.trim()  || '',
+        };
+      } else if (page.template === 'info') {
+        contentData = {
+          label:           document.getElementById('pc-label')?.value.trim()     || '',
+          role:            document.getElementById('pc-role')?.value.trim()      || '',
+          instagram2Label: document.getElementById('pc-ig2-label')?.value.trim() || '',
+          instagram2Url:   document.getElementById('pc-ig2-url')?.value.trim()   || '',
+        };
+      }
+
+      const updated = {
+        ...page,
+        title:      document.getElementById('pe-title').value.trim(),
+        slug:       document.getElementById('pe-slug').value.trim(),
+        menuLabel:  document.getElementById('pe-menulabel').value.trim(),
+        template:   document.getElementById('pe-template').value,
+        status:     document.getElementById('pe-status').value,
+        inMenu:     document.getElementById('pe-inmenu').checked,
+        menuOrder:  parseInt(document.getElementById('pe-menuorder').value) || 0,
+        sections,
+        gallery:    pageGallery,
+        seo: {
+          pageTitle:       document.getElementById('pe-seo-title').value,
+          metaDescription: document.getElementById('pe-seo-desc').value,
+          ogImage:         document.getElementById('pe-seo-og').value,
+          indexable:       document.getElementById('pe-indexable').checked,
+        },
+        ...(contentData !== undefined && { content: contentData }),
+      };
+
       await api.put(`/api/pages/${pageId}`, updated);
       toast('✓ Página guardada correctamente');
       log.info('Page saved:', pageId);
