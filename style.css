@@ -742,7 +742,7 @@ body.loaded.no-anim .intro-collage-img.revealed {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   PERSONAL PAGE — horizontal scroll
+   PERSONAL PAGE — centered scale carousel  (siemprericc-style)
    ══════════════════════════════════════════════════════════════ */
 .page-personal-section {
   flex-direction: column;
@@ -755,92 +755,57 @@ body.loaded.no-anim .intro-collage-img.revealed {
   position: relative;
 }
 
-/* Title bar in personal floats above the grid, positioned absolutely */
+/* Title bar floats above the carousel */
 .page-personal-section .personal-title-bar {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 2;
+  z-index: 20;
 }
 
-.portfolio-grid.horizontal-scroll {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  gap: 0;
-  padding: 20px 0;
-  height: calc(clamp(200px, 40vh, 500px) + 40px);
-  max-height: calc(clamp(200px, 40vh, 500px) + 40px);
-  align-items: center;
-  -webkit-overflow-scrolling: touch;
-  cursor: grab;
-  margin: auto 0;
-}
-.portfolio-grid.horizontal-scroll:active { cursor: grabbing; }
-.portfolio-grid.horizontal-scroll::-webkit-scrollbar { height: 0; }
-.portfolio-grid.horizontal-scroll::-webkit-scrollbar-track { background: transparent; }
-.portfolio-grid.horizontal-scroll::-webkit-scrollbar-thumb { background: transparent; }
-
-.portfolio-grid.horizontal-scroll .portfolio-item {
-  flex: 0 0 auto;
-  height: clamp(200px, 40vh, 500px);
-  max-height: clamp(200px, 40vh, 500px);
-  width: auto;
-  margin-bottom: 0;
-  margin-right: 100px;
-  overflow: visible;
-  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
-}
-.portfolio-grid.horizontal-scroll .portfolio-item:hover { z-index: 2; }
-.portfolio-grid.horizontal-scroll .portfolio-item:hover img {
-  transform: scale(1.03);
-}
-.portfolio-grid.horizontal-scroll .portfolio-item:first-child {
-  margin-left: clamp(32px, 8vw, 100px);
-}
-.portfolio-grid.horizontal-scroll .portfolio-item:last-child {
-  margin-right: clamp(32px, 8vw, 100px);
-}
-.portfolio-grid.horizontal-scroll .portfolio-item-img-wrap {
-  height: 100%;
-  width: auto;
-  overflow: visible;
-  background: transparent;
-}
-.portfolio-grid.horizontal-scroll .portfolio-item img {
-  height: 100%;
-  width: auto;
-  object-fit: contain;
-  transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-/* Personal thumbnail navigation strip */
-.personal-thumbs {
-  display: none;
-  align-items: flex-end;
-  gap: 8px;
-  padding: 0 10px 10px;
-  overflow: visible;
-  flex-shrink: 0;
+/* Carousel stage — full section, overflow hidden to clip sides */
+.personal-carousel {
   position: absolute;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.personal-carousel:active { cursor: grabbing; }
+
+/* Each slide — absolutely positioned by JS */
+.personal-slide {
+  position: absolute;
+  top: 0; left: 0;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+.personal-slide img {
+  display: block;
+  height: min(62vh, 620px);
+  width: auto;
+  max-width: 72vw;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* Counter — bottom center */
+.personal-counter {
+  position: absolute;
+  bottom: max(52px, calc(env(safe-area-inset-bottom, 0px) + 22px));
   left: 0;
   right: 0;
-  z-index: 2;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: var(--size-caption);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--text-1);
+  z-index: 5;
+  pointer-events: none;
 }
-.personal-thumb {
-  flex: 1 1 0%;
-  min-width: 0;
-  overflow: hidden;
-  cursor: none;
-  opacity: 0.4;
-  transition: flex-grow 0.5s var(--ease), opacity 0.4s ease;
-}
-.personal-thumb:hover { flex-grow: 3; opacity: 1; }
-.personal-thumb.active { opacity: 1; }
-.personal-thumb img { width: 100%; height: auto; display: block; }
 
 /* ═══════════════════════════════════════════════════════════
    PERSONAL V2 — TRANSFORM CAROUSEL
@@ -1283,18 +1248,15 @@ body.loaded.no-anim .intro-collage-img.revealed {
   .portfolio-grid { gap: 16px; padding: 0 16px; }
   .portfolio-column { gap: 16px; }
 
-  .portfolio-grid.horizontal-scroll {
-    padding: 16px 0;
-    height: calc(clamp(180px, 35vh, 320px) + 32px);
-    max-height: calc(clamp(180px, 35vh, 320px) + 32px);
+  /* Personal carousel — mobile adjustments */
+  .personal-slide img {
+    height: min(48vh, 400px);
+    max-width: 82vw;
   }
-  .portfolio-grid.horizontal-scroll .portfolio-item {
-    height: clamp(180px, 35vh, 320px);
-    max-height: clamp(180px, 35vh, 320px);
-    margin-bottom: 0;
+  .personal-counter {
+    bottom: max(44px, calc(env(safe-area-inset-bottom, 0px) + 18px));
+    font-size: var(--size-caption);
   }
-  .portfolio-grid.horizontal-scroll .portfolio-item:first-child { margin-left: 16px; }
-  .portfolio-grid.horizontal-scroll .portfolio-item:last-child { margin-right: 16px; }
 
   /* People carousel: allow horizontal swipe without browser scroll interference */
   .carousel-container { touch-action: pan-y; }
@@ -1358,8 +1320,6 @@ body.loaded.no-anim .intro-collage-img.revealed {
 @media (max-width: 768px) and (min-width: 601px) {
   .portfolio-grid { gap: 12px; padding: 0 12px; }
   .portfolio-column { gap: 12px; }
-
-  .portfolio-grid.horizontal-scroll .portfolio-item { margin-bottom: 0; }
 }
 
 /* ══════════════════════════════════════════════════════════════

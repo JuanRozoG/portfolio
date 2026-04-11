@@ -70,8 +70,8 @@
     <div class="page-title-bar personal-title-bar">
       <h2 class="page-title"><a href="#" class="page-title-link" data-page="intro">Juan Rozo</a></h2>
     </div>
-    <div class="portfolio-grid horizontal-scroll" id="grid-personal"></div>
-    <div class="personal-thumbs" id="personal-thumbs"></div>
+    <div class="personal-carousel" id="personal-carousel"></div>
+    <div class="personal-counter" id="personal-counter"></div>
   </section>
 
   <!-- ══════════════════════════════════════════════════════════
@@ -574,6 +574,7 @@
     function showPage(page) {
       // Clean up carousels / archive when leaving
       if (carouselCleanup)         { carouselCleanup();         carouselCleanup = null; }
+      if (personalCleanup)         { personalCleanup();         }
       if (personalV2Cleanup)       { personalV2Cleanup();       personalV2Cleanup = null; }
       if (archiveParallaxCleanup)  { archiveParallaxCleanup();  archiveParallaxCleanup = null; }
       if (archiveZoomedIndex !== null) { closeArchiveZoom(true); }
@@ -876,86 +877,250 @@
     }
 
     /* ════════════════════════════════════════════════════════
-       PERSONAL HORIZONTAL SCROLL
+       PERSONAL — CENTERED SCALE CAROUSEL  (siemprericc-style)
+       Center image large, sides scaled down, counter at bottom.
        ════════════════════════════════════════════════════════ */
+    let personalCleanup = null;
+
     function renderPersonalGrid() {
-      const grid = document.getElementById('grid-personal');
-      if (!grid) return;
+      const container  = document.getElementById('personal-carousel');
+      const counterEl  = document.getElementById('personal-counter');
+      if (!container) return;
 
-      // Clean up previous
-      if (grid._dragCleanup) grid._dragCleanup();
-      grid.scrollLeft = 0;
-      grid.innerHTML = '';
+      // Teardown previous instance
+      if (personalCleanup) { personalCleanup(); personalCleanup = null; }
+      container.innerHTML = '';
+      if (counterEl) counterEl.textContent = '';
 
-      const items = CONFIG.pageGalleries?.['personal-v2'] || CONFIG.projects.filter(p => p.categories.includes('personal'));
+      const items = CONFIG.pageGalleries?.['personal'] || CONFIG.pageGalleries?.['personal-v2'] || CONFIG.projects.filter(p => p.categories.includes('personal'));
+      const total = items.length;
       currentItems = items;
+      if (!total) return;
 
-      items.forEach((proj, idx) => {
-        const div = document.createElement('div');
-        div.className = 'portfolio-item';
-        div.setAttribute('tabindex', '0');
-        div.innerHTML = `
-          <div class="portfolio-item-img-wrap">
-            <img src="${(proj.url || proj.image)}?auto=format&w=1200&q=85"
-                 alt="${proj.title}" loading="${idx < 4 ? 'eager' : 'lazy'}" />
-          </div>
-        `;
-        div.addEventListener('click', (e) => {
-          if (grid._didDrag) { grid._didDrag = false; return; }
-          openLightbox(idx, items);
+      let activeIdx  = 0;
+      let dragStartX = 0;
+      let dragOffset = 0;
+      let isDragging = false;
+      let didDrag    = false;
+
+      // ── Visual constants ─────────────────────────────────────
+      const ACTIVE_SCALE      = 1.22;
+      const INACTIVE_SCALE    = 0.70;
+      const IMG_GAP           = 72;   // px gap between scaled image edges
+      const TRANSITION_MS     = 680;
+      const EASE              = 'cubic-bezier(0.25, 0.1, 0.25, 1)';
+
+      // Base image height — much taller than previous (was 420px max)
+      const imgH = () => Math.min(window.innerHeight * 0.62, 620);
+
+      // ── Build slides ─────────────────────────────────────────
+      const slides = items.map((proj, idx) => {
+        const slide = document.createElement('div');
+        slide.className = 'personal-slide';
+        const img = document.createElement('img');
+        img.src       = (proj.url || proj.image) + '?auto=format&w=1400&q=88';
+        img.alt       = proj.title || '';
+        img.loading   = idx < 6 ? 'eager' : 'lazy';
+        img.draggable = false;
+        img.style.cssText = `height:${imgH()}px;width:auto;max-width:72vw;object-fit:contain;display:block;pointer-events:none;`;
+        slide.appendChild(img);
+
+        // Click: center image → lightbox; side image → navigate
+        slide.addEventListener('click', () => {
+          if (didDrag) { didDrag = false; return; }
+          if (idx === activeIdx) openLightbox(idx, items);
+          else goTo(idx);
         });
-        grid.appendChild(div);
+
+        container.appendChild(slide);
+        return slide;
       });
 
-      // Thumbnail navigation strip
-      const personalThumbs = document.getElementById('personal-thumbs');
-      personalThumbs.innerHTML = '';
-      personalThumbs.style.display = 'flex';
-      const portfolioItems = grid.querySelectorAll('.portfolio-item');
+      // ── Layout engine ─────────────────────────────────────────
+      // Positions all slides around the active one using scale + translate3d.
+      function layout(animate) {
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        const cx = cw / 2;
+        const cy = ch / 2;
 
-      items.forEach((proj, idx) => {
-        const thumb = document.createElement('div');
-        thumb.className = 'personal-thumb';
-        thumb.innerHTML = `<img src="${(proj.url || proj.image)}?auto=format&w=200&q=75" alt="${proj.alt || proj.title || ''}" />`;
-        thumb.addEventListener('click', () => {
-          const target = portfolioItems[idx];
-          if (target) {
-            const targetLeft = target.offsetLeft;
-            const targetW = target.offsetWidth;
-            const gridW = grid.clientWidth;
-            const scrollTo = targetLeft - (gridW / 2) + (targetW / 2);
-            smoothScrollTo(grid, scrollTo, 800);
-          }
+        const data = slides.map((slide, i) => {
+          const img    = slide.querySelector('img');
+          const nw     = img ? img.clientWidth  || img.naturalWidth  * (imgH() / (img.naturalHeight || imgH())) : 200;
+          const nh     = img ? img.clientHeight || imgH() : imgH();
+          const scale  = i === activeIdx ? ACTIVE_SCALE : INACTIVE_SCALE;
+          return { nw, nh, scale, sw: nw * scale };
         });
-        personalThumbs.appendChild(thumb);
+
+        // Walk outward from active to build centerX for each slide
+        const cx_arr = new Array(slides.length).fill(0);
+        cx_arr[activeIdx] = cx + dragOffset;
+
+        for (let i = activeIdx + 1; i < slides.length; i++) {
+          cx_arr[i] = cx_arr[i - 1] + data[i - 1].sw / 2 + IMG_GAP + data[i].sw / 2;
+        }
+        for (let i = activeIdx - 1; i >= 0; i--) {
+          cx_arr[i] = cx_arr[i + 1] - data[i + 1].sw / 2 - IMG_GAP - data[i].sw / 2;
+        }
+
+        slides.forEach((slide, i) => {
+          const { nw, nh, scale } = data[i];
+          const x = cx_arr[i] - nw / 2;
+          const y = cy - nh / 2;
+          const z = i === activeIdx ? 10 : 1;
+          const dist  = Math.abs(i - activeIdx);
+          const opac  = dist > 5 ? 0 : 1;
+
+          slide.style.transition = animate
+            ? `transform ${TRANSITION_MS}ms ${EASE}, opacity ${TRANSITION_MS}ms ${EASE}`
+            : 'none';
+          slide.style.transform  = `translate3d(${x}px,${y}px,0) scale(${scale})`;
+          slide.style.zIndex     = z;
+          slide.style.opacity    = opac;
+        });
+      }
+
+      // ── Counter ───────────────────────────────────────────────
+      function updateCounter() {
+        if (counterEl) counterEl.textContent = `${activeIdx + 1} / ${total}`;
+      }
+
+      // ── Navigation ────────────────────────────────────────────
+      function goTo(idx, animated = true) {
+        activeIdx  = Math.max(0, Math.min(idx, total - 1));
+        dragOffset = 0;
+        layout(animated);
+        updateCounter();
+      }
+      const goNext = () => { if (activeIdx < total - 1) goTo(activeIdx + 1); };
+      const goPrev = () => { if (activeIdx > 0)         goTo(activeIdx - 1); };
+
+      // ── Wheel — accumulator, one step per gesture ─────────────
+      let wheelAccum = 0, wheelTimer = null, lastWheelNav = 0;
+      const WHEEL_THRESHOLD = 50, WHEEL_COOLDOWN = 320, WHEEL_RESET = 120;
+      function onWheel(e) {
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastWheelNav < WHEEL_COOLDOWN) return;
+        const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+        wheelAccum += delta;
+        clearTimeout(wheelTimer);
+        wheelTimer = setTimeout(() => { wheelAccum = 0; }, WHEEL_RESET);
+        if (Math.abs(wheelAccum) >= WHEEL_THRESHOLD) {
+          wheelAccum > 0 ? goNext() : goPrev();
+          lastWheelNav = now;
+          wheelAccum = 0;
+          clearTimeout(wheelTimer);
+        }
+      }
+
+      // ── Mouse drag ────────────────────────────────────────────
+      function onMouseDown(e) {
+        isDragging = true; didDrag = false;
+        dragStartX = e.clientX; dragOffset = 0;
+        slides.forEach(s => { s.style.transition = 'none'; });
+        container.style.cursor = 'grabbing';
+      }
+      function onMouseMove(e) {
+        if (!isDragging) return;
+        dragOffset = e.clientX - dragStartX;
+        if (Math.abs(dragOffset) > 5) didDrag = true;
+        layout(false);
+      }
+      function onMouseUp() {
+        if (!isDragging) return;
+        isDragging = false;
+        container.style.cursor = '';
+        const thresh = window.innerWidth * 0.10;
+        if      (dragOffset >  thresh) goPrev();
+        else if (dragOffset < -thresh) goNext();
+        else { dragOffset = 0; layout(true); }
+      }
+
+      // ── Touch drag ────────────────────────────────────────────
+      function onTouchStart(e) {
+        isDragging = true; didDrag = false;
+        dragStartX = e.touches[0].clientX; dragOffset = 0;
+        slides.forEach(s => { s.style.transition = 'none'; });
+      }
+      function onTouchMove(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        dragOffset = e.touches[0].clientX - dragStartX;
+        if (Math.abs(dragOffset) > 5) didDrag = true;
+        layout(false);
+      }
+      function onTouchEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        const thresh = window.innerWidth * 0.10;
+        if      (dragOffset >  thresh) goPrev();
+        else if (dragOffset < -thresh) goNext();
+        else { dragOffset = 0; layout(true); }
+      }
+
+      // ── Keyboard ──────────────────────────────────────────────
+      function onKeyDown(e) {
+        if (currentPage !== 'personal') return;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goNext(); }
+        if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); goPrev(); }
+      }
+
+      // ── Resize ────────────────────────────────────────────────
+      function onResize() {
+        slides.forEach(s => {
+          const img = s.querySelector('img');
+          if (img) img.style.height = imgH() + 'px';
+        });
+        layout(false);
+      }
+
+      // Attach events
+      container.addEventListener('wheel',      onWheel,      { passive: false });
+      container.addEventListener('mousedown',  onMouseDown);
+      window.addEventListener   ('mousemove',  onMouseMove);
+      window.addEventListener   ('mouseup',    onMouseUp);
+      container.addEventListener('touchstart', onTouchStart, { passive: true });
+      container.addEventListener('touchmove',  onTouchMove,  { passive: false });
+      container.addEventListener('touchend',   onTouchEnd);
+      window.addEventListener   ('keydown',    onKeyDown);
+      window.addEventListener   ('resize',     onResize);
+
+      // ── Cursor ────────────────────────────────────────────────
+      slides.forEach(slide => {
+        slide.addEventListener('mouseenter', () => { setCursorLabel('View'); cursor.classList.add('cursor--active'); });
+        slide.addEventListener('mouseleave', () => { cursor.classList.remove('cursor--active'); });
       });
 
-      // Highlight active thumb on scroll
-      let scrollRAF;
-      grid.addEventListener('scroll', () => {
-        if (scrollRAF) cancelAnimationFrame(scrollRAF);
-        scrollRAF = requestAnimationFrame(() => {
-          const gridLeft = grid.getBoundingClientRect().left;
-          const gridCenter = gridLeft + grid.clientWidth / 2;
-          let closestIdx = 0;
-          let closestDist = Infinity;
-          portfolioItems.forEach((item, i) => {
-            const rect = item.getBoundingClientRect();
-            const itemCenter = rect.left + rect.width / 2;
-            const dist = Math.abs(itemCenter - gridCenter);
-            if (dist < closestDist) { closestDist = dist; closestIdx = i; }
-          });
-          personalThumbs.querySelectorAll('.personal-thumb').forEach((t, i) => {
-            t.classList.toggle('active', i === closestIdx);
-          });
-        });
+      document.body.style.overflow = 'hidden';
+
+      // Initial layout — no animation, then re-layout once images load
+      goTo(0, false);
+      let loadCount = 0;
+      slides.forEach((slide) => {
+        const img = slide.querySelector('img');
+        if (!img) return;
+        const onLoad = () => { loadCount++; if (loadCount <= 6) layout(loadCount === 1); };
+        if (img.complete) onLoad();
+        else img.addEventListener('load', onLoad, { once: true });
       });
 
-      initDragScroll(grid);
-      requestAnimationFrame(() => { grid.scrollLeft = 0; });
-      // For horizontal scroll, make items visible immediately (no vertical IntersectionObserver)
-      grid.querySelectorAll('.portfolio-item').forEach(el => el.classList.add('visible'));
-      reattachCursorEvents();
+      // ── Cleanup ───────────────────────────────────────────────
+      personalCleanup = () => {
+        container.removeEventListener('wheel',      onWheel);
+        container.removeEventListener('mousedown',  onMouseDown);
+        window.removeEventListener   ('mousemove',  onMouseMove);
+        window.removeEventListener   ('mouseup',    onMouseUp);
+        container.removeEventListener('touchstart', onTouchStart);
+        container.removeEventListener('touchmove',  onTouchMove);
+        container.removeEventListener('touchend',   onTouchEnd);
+        window.removeEventListener   ('keydown',    onKeyDown);
+        window.removeEventListener   ('resize',     onResize);
+        document.body.style.overflow = '';
+        container.innerHTML = '';
+        if (counterEl) counterEl.textContent = '';
+        personalCleanup = null;
+      };
     }
 
     /* ── Smooth scroll with easeInOutCubic ──────────────── */
