@@ -978,11 +978,13 @@ body.loaded.no-anim .intro-collage-img.revealed {
   letter-spacing: var(--ls-body);
   line-height: var(--lh-body);
   color: var(--color-text-light);
-  opacity: 0.5;
+  opacity: 1;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   transition: opacity 0.3s;
   width: fit-content;
 }
-.about-links a:hover { opacity: 1; }
+.about-links a:hover { opacity: 0.5; }
 
 /* ══════════════════════════════════════════════════════════════
    FOOTER
