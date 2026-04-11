@@ -361,14 +361,13 @@ body.menu-open .site-logo { opacity: 0; pointer-events: none; }
 }
 .menu-name:hover { opacity: 0.4; }
 
-/* ── Navigation — horizontal editorial layout ─────────────── */
+/* ── Navigation — vertical, one item per line, left-aligned ── */
 .menu-nav {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: flex-start;
-  align-content: center;
-  gap: 0 clamp(20px, 3.5vw, 56px);
+  justify-content: center;
+  gap: 0;
   padding: 76px 40px 76px 40px;
   flex: 1;
   z-index: 301;
@@ -1175,7 +1174,7 @@ body.loaded.no-anim .intro-collage-img.revealed {
   .intro-name { font-size: clamp(48px, 12vw, 120px); }
   .menu-preview { display: none; }
   .menu-footer { padding: 16px 24px; }
-  .menu-nav { padding: 76px 24px 76px 24px; gap: 0 clamp(16px, 3vw, 32px); align-content: center; }
+  .menu-nav { padding: 76px 24px 76px 24px; gap: 0; }
   .menu-link-lbl { font-size: clamp(26px, 4.5vw, 64px); }
 }
 
@@ -1193,10 +1192,9 @@ body.loaded.no-anim .intro-collage-img.revealed {
     right: 16px;
   }
   .menu-nav {
-    gap: 0 clamp(12px, 5vw, 24px);
+    gap: 0;
     padding: 72px 20px 72px 20px;
     overflow-y: auto;
-    align-content: center;
   }
   .menu-link-lbl { font-size: clamp(20px, 9vw, 40px); white-space: normal; }
   .menu-name {

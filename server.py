@@ -909,6 +909,10 @@ def serve_admin():
 def serve_upload(filename):
     return send_from_directory(str(UPLOAD_DIR), filename)
 
+@app.route("/images/<path:filename>")
+def serve_images(filename):
+    return send_from_directory(str(BASE_DIR / "images"), filename)
+
 @app.route("/<path:filename>")
 def serve_static(filename):
     try:
@@ -941,6 +945,34 @@ def serve_static(filename):
             # SPA pages — serve index.html; JS reads location.pathname to pick the right section
             return send_file(str(BASE_DIR / "index.html"))
     abort(404)
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  One-time migration: fix ephemeral /uploads/ photo URLs → permanent /images/
+# ══════════════════════════════════════════════════════════════════════════════
+def _migrate_about_photo():
+    """
+    On Vercel, /tmp/uploads/ is wiped on every deployment.
+    If site.json still has an /uploads/ URL for about.photo, replace it
+    with the permanent /images/ URL committed to the git repo.
+    """
+    try:
+        site = read_json("site.json") or {}
+        photo = site.get("about", {}).get("photo", "")
+        if photo.startswith("/uploads/"):
+            # Find a replacement in the /images/ directory
+            images_dir = BASE_DIR / "images"
+            candidates = sorted(images_dir.iterdir()) if images_dir.is_dir() else []
+            permanent = next((f for f in candidates if f.is_file() and f.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp")), None)
+            if permanent:
+                new_url = "/images/" + permanent.name
+                site.setdefault("about", {})["photo"] = new_url
+                write_json("site.json", site)
+                regenerate_config_js()
+                log.info("Migrated about.photo: %s → %s", photo, new_url)
+    except Exception as e:
+        log.warning("Photo migration skipped: %s", e)
+
+_migrate_about_photo()
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  Startup (local dev only — Vercel uses the module directly)
