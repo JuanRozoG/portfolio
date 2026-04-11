@@ -498,13 +498,30 @@ async function renderPages() {
   document.querySelectorAll('[data-action="set-home"]').forEach(el => {
     el.addEventListener('change', async () => {
       if (!el.checked) return;
-      const p = pages.find(x => x.id === el.dataset.id);
-      if (!p) return;
+      const newHome = pages.find(x => x.id === el.dataset.id);
+      if (!newHome) return;
+      // Optimistic inline update — no full re-render
+      const prevChecked = el; // already checked by browser
       try {
-        await api.put(`/api/pages/${p.id}`, { ...p, isHome: true });
-        toast(`"${p.title}" set as Home Page`);
-        renderPages();
-      } catch(e) { toast(e.message, 'error'); el.checked = false; }
+        await api.put(`/api/pages/${newHome.id}`, { ...newHome, isHome: true });
+        // Update local pages array
+        pages.forEach(x => { x.isHome = (x.id === newHome.id); });
+        // Update all radios + their parent label attributes inline
+        document.querySelectorAll('[data-action="set-home"]').forEach(r => {
+          const isThis = r.dataset.id === newHome.id;
+          r.checked = isThis;
+          r.style.cursor = isThis ? 'default' : 'pointer';
+          const lbl = r.closest('label');
+          if (lbl) {
+            lbl.title = isThis ? 'Current Home Page' : 'Set as Home Page';
+            lbl.style.cursor = isThis ? 'default' : 'pointer';
+          }
+        });
+        toast(`"${newHome.title}" set as Home Page`);
+      } catch(e) {
+        toast(e.message, 'error');
+        el.checked = false;
+      }
     });
   });
 
