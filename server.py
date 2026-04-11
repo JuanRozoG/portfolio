@@ -875,8 +875,8 @@ def serve_index():
     if home and home.get("template") in ("archive-standalone", "filmstrip"):
         html_path = BASE_DIR / f"{home['id']}.html"
         if html_path.is_file():
-            return send_file(str(html_path))
-    return send_file(str(BASE_DIR / "index.html"))
+            return serve_html(html_path)
+    return serve_html(BASE_DIR / "index.html")
 
 @app.route("/config.js")
 def serve_config_js():
@@ -925,20 +925,11 @@ def serve_shared_js():
     r.headers["Cache-Control"] = "no-cache"
     return r
 
-@app.after_request
-def inject_shared_assets(response):
-    """Auto-inject shared.css + shared.js into every HTML page that doesn't
-    already have its own cursor element. This ensures consistent cursor and
-    menu styling on all pages — current and future — without touching each
-    file individually."""
-    ct = response.content_type or ""
-    if "text/html" not in ct:
-        return response
-    try:
-        content = response.get_data(as_text=True)
-        # Skip if already injected or if the page has its own full cursor system
-        if "/shared.css" in content or 'id="cursor"' in content:
-            return response
+def serve_html(html_path):
+    """Read an HTML file, inject shared.css + shared.js if the page has no cursor,
+    and return a no-cache Response. Works reliably on Vercel (no streaming issues)."""
+    content = Path(html_path).read_text(encoding="utf-8")
+    if "/shared.css" not in content and 'id="cursor"' not in content:
         content = content.replace(
             "</head>",
             '<link rel="stylesheet" href="/shared.css">\n</head>',
@@ -949,10 +940,8 @@ def inject_shared_assets(response):
             '<script defer src="/shared.js"></script>\n</body>',
             1,
         )
-        response.set_data(content)
-    except Exception:
-        pass
-    return response
+    return Response(content, mimetype="text/html",
+                    headers={"Cache-Control": "no-cache"})
 
 @app.route("/<path:filename>")
 def serve_static(filename):
@@ -981,10 +970,10 @@ def serve_static(filename):
             # Standalone pages have a physical .html file named after their id
             html_path = BASE_DIR / f"{page_id}.html"
             if html_path.is_file():
-                return send_file(str(html_path))
+                return serve_html(html_path)
         else:
             # SPA pages — serve index.html; JS reads location.pathname to pick the right section
-            return send_file(str(BASE_DIR / "index.html"))
+            return serve_html(BASE_DIR / "index.html")
     abort(404)
 
 # ══════════════════════════════════════════════════════════════════════════════
