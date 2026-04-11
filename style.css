@@ -94,7 +94,7 @@ button { cursor: none; }
   top: -5px; left: -5px;
   width: 10px; height: 10px;
   border-radius: 50%;
-  border: 1.5px solid var(--color-text-light);
+  border: 1.5px solid var(--color-red);
   background: transparent;
   pointer-events: none;
   z-index: 9999;

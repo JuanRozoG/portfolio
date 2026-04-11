@@ -6,7 +6,7 @@
   <title>Juan Rozo</title>
   <meta name="description" content="Juan Rozo — Photographer & Art-director. Melbourne based." />
   <link rel="icon" type="image/png" href="https://juanrozo.com/wp-content/uploads/2024/05/Artboard-2.png" />
-  <link rel="stylesheet" href="style.css?v=6" />
+  <link rel="stylesheet" href="style.css?v=7" />
   <meta property="og:image" content="https://juanrozo.com/wp-content/uploads/2025/01/JRG9384-Edit-3-scaled.jpg" />
 </head>
 <body class="page-intro">
@@ -2024,6 +2024,7 @@
       nav.querySelectorAll('.menu-link').forEach(link => {
         if (!_menuIsTouch) {
           link.addEventListener('mouseenter', () => {
+            cursor.classList.add('cursor--link');
             if (menuCurrentLink && menuCurrentLink !== link) menuCurrentLink.classList.remove('hovered');
             link.classList.add('hovered');
             menuCurrentLink = link;
@@ -2062,6 +2063,7 @@
             }
           });
           link.addEventListener('mouseleave', () => {
+            cursor.classList.remove('cursor--link');
             link.classList.remove('hovered');
             if (menuCurrentLink === link) menuCurrentLink = null;
             setTimeout(() => {
@@ -2156,8 +2158,8 @@
         siteLogo.addEventListener('mouseleave', () => cursor.classList.remove('cursor--link'));
       }
 
-      // Menu links
-      document.querySelectorAll('.menu-link, .menu-close, .menu-footer-link, .menu-name').forEach(el => {
+      // Menu close / footer / name links
+      document.querySelectorAll('.menu-close, .menu-footer-link, .menu-name').forEach(el => {
         el.addEventListener('mouseenter', () => cursor.classList.add('cursor--link'));
         el.addEventListener('mouseleave', () => cursor.classList.remove('cursor--link'));
       });
