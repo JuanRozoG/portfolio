@@ -607,6 +607,8 @@ def api_update_page(page_id):
     for i, p in enumerate(pages):
         if p["id"] == page_id:
             data["id"] = page_id
+            if data.get("isHome") and data.get("template") in ("archive-standalone", "filmstrip"):
+                return jsonify({"error": "Standalone pages cannot be set as Home"}), 400
             if data.get("isHome"):
                 for j, other in enumerate(pages):
                     if other["id"] != page_id and other.get("isHome"):
