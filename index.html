@@ -626,6 +626,14 @@
       if (isTransitioning) return;
       if (currentPage === targetPage) return;
 
+      // If the target is a standalone page (external HTML), navigate directly.
+      const _allPagesNav = (typeof CONFIG !== 'undefined' && CONFIG.allPages) || [];
+      const _targetMeta  = _allPagesNav.find(p => p.id === targetPage);
+      if (_targetMeta && ['archive-standalone', 'filmstrip'].includes(_targetMeta.template)) {
+        window.location.href = '/' + (_targetMeta.slug || targetPage);
+        return;
+      }
+
       isTransitioning = true;
 
       // Close menu first if open
@@ -2213,8 +2221,15 @@
         const hashPage = location.hash.slice(1);
         if (!_resolveAndShow(hashPage)) showPage(currentPage);
       } else {
-        // Root / — show configured home page
-        showPage(currentPage);
+        // Root / — show configured home page.
+        // If home is a standalone page, redirect to its URL (server normally handles this,
+        // but fallback here covers local dev or edge cases).
+        const _homeMeta = _allPages.find(p => p.id === currentPage);
+        if (_homeMeta && ['archive-standalone', 'filmstrip'].includes(_homeMeta.template)) {
+          window.location.replace('/' + (_homeMeta.slug || currentPage));
+        } else {
+          showPage(currentPage);
+        }
       }
     }
 

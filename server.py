@@ -607,8 +607,6 @@ def api_update_page(page_id):
     for i, p in enumerate(pages):
         if p["id"] == page_id:
             data["id"] = page_id
-            if data.get("isHome") and data.get("template") in ("archive-standalone", "filmstrip"):
-                return jsonify({"error": "Standalone pages cannot be set as Home"}), 400
             if data.get("isHome"):
                 for j, other in enumerate(pages):
                     if other["id"] != page_id and other.get("isHome"):
@@ -872,6 +870,12 @@ def api_delete_upload(filename):
 # ══════════════════════════════════════════════════════════════════════════════
 @app.route("/")
 def serve_index():
+    pages = read_json("pages.json") or []
+    home  = next((p for p in pages if p.get("isHome")), None)
+    if home and home.get("template") in ("archive-standalone", "filmstrip"):
+        html_path = BASE_DIR / f"{home['id']}.html"
+        if html_path.is_file():
+            return send_file(str(html_path))
     return send_file(str(BASE_DIR / "index.html"))
 
 @app.route("/config.js")

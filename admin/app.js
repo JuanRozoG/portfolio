@@ -442,13 +442,11 @@ async function renderPages() {
         <label class="toggle"><input type="checkbox" data-action="toggle-menu" data-id="${esc(p.id)}" ${p.inMenu ? 'checked' : ''} /><span class="toggle-track"></span></label>
       </td>
       <td style="text-align:center">
-        ${['archive-standalone','filmstrip'].includes(p.template)
-          ? `<span title="Standalone pages cannot be set as Home" style="color:var(--text-3,#aaa);font-size:13px;line-height:1">—</span>`
-          : `<label title="${p.isHome ? 'Current Home Page' : 'Set as Home Page'}" style="cursor:${p.isHome ? 'default' : 'pointer'};display:inline-flex;align-items:center;justify-content:center">
+        <label title="${p.isHome ? 'Current Home Page' : 'Set as Home Page'}" style="cursor:${p.isHome ? 'default' : 'pointer'};display:inline-flex;align-items:center;justify-content:center">
           <input type="radio" name="home-page-radio" data-action="set-home" data-id="${esc(p.id)}"
             ${p.isHome ? 'checked' : ''}
             style="width:16px;height:16px;accent-color:var(--accent,#5b5ef4);cursor:${p.isHome ? 'default' : 'pointer'}" />
-        </label>`}
+        </label>
       </td>
       <td>
         <div class="row-actions">
