@@ -913,6 +913,47 @@ def serve_upload(filename):
 def serve_images(filename):
     return send_from_directory(str(BASE_DIR / "images"), filename)
 
+@app.route("/shared.css")
+def serve_shared_css():
+    r = send_from_directory(str(BASE_DIR), "shared.css")
+    r.headers["Cache-Control"] = "no-cache"
+    return r
+
+@app.route("/shared.js")
+def serve_shared_js():
+    r = send_from_directory(str(BASE_DIR), "shared.js")
+    r.headers["Cache-Control"] = "no-cache"
+    return r
+
+@app.after_request
+def inject_shared_assets(response):
+    """Auto-inject shared.css + shared.js into every HTML page that doesn't
+    already have its own cursor element. This ensures consistent cursor and
+    menu styling on all pages — current and future — without touching each
+    file individually."""
+    ct = response.content_type or ""
+    if "text/html" not in ct:
+        return response
+    try:
+        content = response.get_data(as_text=True)
+        # Skip if already injected or if the page has its own full cursor system
+        if "/shared.css" in content or 'id="cursor"' in content:
+            return response
+        content = content.replace(
+            "</head>",
+            '<link rel="stylesheet" href="/shared.css">\n</head>',
+            1,
+        )
+        content = content.replace(
+            "</body>",
+            '<script defer src="/shared.js"></script>\n</body>',
+            1,
+        )
+        response.set_data(content)
+    except Exception:
+        pass
+    return response
+
 @app.route("/<path:filename>")
 def serve_static(filename):
     try:

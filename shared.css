@@ -1,0 +1,98 @@
+/*
+ * shared.css — Site-wide globals injected into every page
+ * Covers: custom cursor, menu-nav vertical layout
+ * Loaded automatically by server.py for standalone pages.
+ */
+
+/* ── Custom cursor ──────────────────────────────────────── */
+body { cursor: none; }
+button, a { cursor: none; }
+
+.cursor {
+  position: fixed;
+  top: -5px; left: -5px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid #ff3232;
+  background: transparent;
+  pointer-events: none;
+  z-index: 9999;
+  transition:
+    width 0.4s cubic-bezier(0.25, 0.1, 0.25, 1),
+    height 0.4s cubic-bezier(0.25, 0.1, 0.25, 1),
+    top 0.4s cubic-bezier(0.25, 0.1, 0.25, 1),
+    left 0.4s cubic-bezier(0.25, 0.1, 0.25, 1),
+    padding 0.4s cubic-bezier(0.25, 0.1, 0.25, 1),
+    border-radius 0.3s,
+    border-color 0.3s,
+    background 0.3s;
+  display: flex; align-items: center; justify-content: center;
+}
+.cursor span {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #000;
+  opacity: 0;
+  transition: opacity 0.25s;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.cursor--link {
+  width: 28px; height: 28px;
+  top: -14px; left: -14px;
+  background: #ff3232;
+  border-color: #ff3232;
+}
+.cursor--active {
+  width: auto; height: auto;
+  top: -4px; left: 4px;
+  padding: 8px 16px;
+  border-radius: 0;
+  border-color: #ff3232;
+  background: #ff3232;
+}
+.cursor--active span { opacity: 1; color: #000; }
+.cursor--label {
+  width: auto; height: auto;
+  top: -4px; left: 4px;
+  padding: 6px 14px;
+  border-radius: 0;
+  background: #ff3232;
+  border-color: #ff3232;
+}
+.cursor--label span { opacity: 1; color: #000; }
+
+/* Cursor inside menu overlay — white on black */
+body.menu-open .cursor {
+  border-color: #ffffff !important;
+  background: transparent !important;
+}
+body.menu-open .cursor--link {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+/* ── Menu nav — one item per line, left-aligned ─────────── */
+.menu-nav {
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-content: unset !important;
+  gap: 0 !important;
+}
+@media (max-width: 900px) {
+  .menu-nav {
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-content: unset !important;
+    gap: 0 !important;
+  }
+}
+@media (max-width: 600px) {
+  .menu-nav {
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-content: unset !important;
+    gap: 0 !important;
+  }
+}
