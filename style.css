@@ -71,10 +71,10 @@ body {
   transition: background-color 0.5s ease, color 0.5s ease;
 }
 
-/* Dark mode — info page */
+/* Info page — same light theme as the rest */
 body.page-info {
-  background-color: var(--color-bg-dark);
-  color: var(--color-text-dark);
+  background-color: var(--color-bg-light);
+  color: var(--color-text-light);
 }
 
 a {
@@ -138,26 +138,12 @@ button { cursor: none; }
 }
 .cursor--label span { opacity: 1; color: #000000; }
 
-/* Cursor on dark pages */
-body.page-info .cursor { border-color: var(--color-text-dark); }
-body.page-info .cursor span { color: var(--color-bg-dark); }
-body.page-info .cursor--active {
-  border-color: var(--color-text-dark);
-  background: rgba(255, 50, 50, 0.08);
-}
-body.page-info .cursor--link {
-  background: var(--color-text-dark);
-  border-color: var(--color-text-dark);
-}
-
 /* Cursor when menu is open — white for contrast against black overlay */
-body.menu-open .cursor,
-body.page-info.menu-open .cursor {
+body.menu-open .cursor {
   border-color: #ffffff !important;
   background: transparent !important;
 }
-body.menu-open .cursor--link,
-body.page-info.menu-open .cursor--link {
+body.menu-open .cursor--link {
   background: #ffffff !important;
   border-color: #ffffff !important;
 }
@@ -275,10 +261,6 @@ body.menu-open .site-logo { opacity: 0; pointer-events: none; }
   }
 }
 
-/* Menu button on dark pages */
-body.page-info .menu-btn {
-  color: var(--color-red);
-}
 
 /* ══════════════════════════════════════════════════════════════
    SLIDE-UP MENU OVERLAY
@@ -898,7 +880,7 @@ body.loaded.no-anim .intro-collage-img.revealed {
   transition: opacity 0.5s ease;
 }
 
-/* Info page title bar — positioned absolutely over the dark layout */
+/* Info page title bar */
 .info-title-bar {
   position: absolute;
   top: 0;
@@ -906,18 +888,14 @@ body.loaded.no-anim .intro-collage-img.revealed {
   right: 0;
   z-index: 10;
 }
-.info-title-bar .page-title,
-.info-title-bar .page-title-link {
-  color: var(--color-text-dark);
-}
 
 /* ══════════════════════════════════════════════════════════════
-   INFO PAGE — DARK MODE
+   INFO PAGE
    ══════════════════════════════════════════════════════════════ */
 #page-info.active {
   display: block;
   min-height: 100vh;
-  color: var(--color-text-dark);
+  color: var(--color-text-light);
   animation: fadeIn 0.7s var(--ease) forwards;
   position: relative;
 }
@@ -961,7 +939,7 @@ body.loaded.no-anim .intro-collage-img.revealed {
   letter-spacing: var(--ls-caption);
   line-height: var(--lh-caption);
   text-transform: uppercase;
-  color: var(--color-text-dark);
+  color: var(--color-text-light);
   margin-bottom: 28px;
 }
 
@@ -976,7 +954,7 @@ body.loaded.no-anim .intro-collage-img.revealed {
   font-size: var(--size-body);
   letter-spacing: var(--ls-body);
   line-height: var(--lh-body);
-  color: var(--color-text-dark);
+  color: var(--color-text-light);
   margin-bottom: 44px;
 }
 
@@ -985,7 +963,7 @@ body.loaded.no-anim .intro-collage-img.revealed {
   letter-spacing: var(--ls-body);
   line-height: var(--lh-body);
   white-space: pre-line;
-  color: var(--color-text-dark);
+  color: var(--color-text-light);
   max-width: 520px;
 }
 
@@ -999,7 +977,7 @@ body.loaded.no-anim .intro-collage-img.revealed {
   font-size: var(--size-body);
   letter-spacing: var(--ls-body);
   line-height: var(--lh-body);
-  color: var(--color-text-dark);
+  color: var(--color-text-light);
   opacity: 0.5;
   transition: opacity 0.3s;
   width: fit-content;
