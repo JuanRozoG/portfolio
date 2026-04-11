@@ -73,10 +73,12 @@ body.menu-open .cursor--link {
   border-color: #ffffff !important;
 }
 
-/* ── Menu nav — one item per line, left-aligned ─────────── */
+/* ── Menu nav — one item per line, left-aligned, vertically centred ── */
 .menu-nav {
   flex-direction: column !important;
   flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
   align-content: unset !important;
   gap: 0 !important;
 }
@@ -84,6 +86,8 @@ body.menu-open .cursor--link {
   .menu-nav {
     flex-direction: column !important;
     flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
     align-content: unset !important;
     gap: 0 !important;
   }
@@ -92,6 +96,8 @@ body.menu-open .cursor--link {
   .menu-nav {
     flex-direction: column !important;
     flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
     align-content: unset !important;
     gap: 0 !important;
   }

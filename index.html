@@ -626,11 +626,23 @@
       if (isTransitioning) return;
       if (currentPage === targetPage) return;
 
-      // If the target is a standalone page (external HTML), navigate directly.
+      // If the target is a standalone page (external HTML), do wipe then navigate.
       const _allPagesNav = (typeof CONFIG !== 'undefined' && CONFIG.allPages) || [];
       const _targetMeta  = _allPagesNav.find(p => p.id === targetPage);
       if (_targetMeta && ['archive-standalone', 'filmstrip'].includes(_targetMeta.template)) {
-        window.location.href = '/' + (_targetMeta.slug || targetPage);
+        isTransitioning = true;
+        closeMenu();
+        const _wipeEl = document.createElement('div');
+        _wipeEl.className = 'wipe-overlay';
+        document.body.appendChild(_wipeEl);
+        requestAnimationFrame(() => {
+          _wipeEl.classList.add('wipe-in');
+          const _dest = '/' + (_targetMeta.slug || targetPage);
+          let _done = false;
+          function _go() { if (_done) return; _done = true; window.location.href = _dest; }
+          _wipeEl.addEventListener('animationend', _go);
+          setTimeout(_go, 700); // fallback
+        });
         return;
       }
 
@@ -2084,12 +2096,7 @@
           const slug = link.dataset.slug;
           const id   = link.dataset.page;
           closeMenu();
-          if (tpl === 'archive-standalone' || tpl === 'filmstrip') {
-            // Use /slug clean URL — server resolves slug → physical id.html file.
-            setTimeout(() => { window.location.href = '/' + (slug || id); }, 120);
-          } else {
-            setTimeout(() => navigateTo(id), 100);
-          }
+          setTimeout(() => navigateTo(id), 100);
         });
       });
     }
