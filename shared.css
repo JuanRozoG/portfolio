@@ -63,14 +63,14 @@ button, a { cursor: none; }
 }
 .cursor--label span { opacity: 1; color: #000; }
 
-/* Cursor inside menu overlay — white on black */
+/* Cursor inside menu overlay — red on black */
 body.menu-open .cursor {
-  border-color: #ffffff !important;
+  border-color: #ff3232 !important;
   background: transparent !important;
 }
 body.menu-open .cursor--link {
-  background: #ffffff !important;
-  border-color: #ffffff !important;
+  background: #ff3232 !important;
+  border-color: #ff3232 !important;
 }
 
 /* ── Menu nav — one item per line, left-aligned, vertically centred ── */
