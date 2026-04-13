@@ -244,7 +244,7 @@ body:has(.lightbox.open) .cursor--active span { color: #000; }
   line-height: 0;
 }
 .site-logo img {
-  height: 20px;
+  height: 40px;
   width: auto;
   display: block;
 }
@@ -353,7 +353,7 @@ body.menu-open .site-logo { opacity: 0; pointer-events: none; }
   transition: opacity 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 .menu-name img {
-  height: 20px;
+  height: 40px;
   width: auto;
   display: block;
 }
