@@ -235,7 +235,7 @@ body:has(.lightbox.open) .cursor--active span { color: #000; }
    ══════════════════════════════════════════════════════════════ */
 .site-logo {
   position: fixed;
-  top: 18px;
+  top: 14px;
   left: 24px;
   z-index: 200;
   text-decoration: none;
@@ -255,7 +255,7 @@ body.menu-open .site-logo { opacity: 0; pointer-events: none; }
 
 @media (max-width: 768px) {
   .site-logo {
-    top: max(16px, calc(env(safe-area-inset-top, 0px) + 16px));
+    top: max(12px, env(safe-area-inset-top, 12px));
     left: 16px;
   }
 }
@@ -344,7 +344,7 @@ body.menu-open .site-logo { opacity: 0; pointer-events: none; }
 /* ── Name / logo inside overlay ───────────────────────────── */
 .menu-name {
   position: absolute;
-  top: 18px;
+  top: 14px;
   left: 24px;
   z-index: 302;
   line-height: 0;
