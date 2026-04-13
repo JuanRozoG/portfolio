@@ -1,6 +1,6 @@
 {
   "about": {
-    "photo": "/uploads/2ca272ea_JRG9384-Edit-3-scaled.jpg",
+    "photo": "https://raw.githubusercontent.com/JuanRozoG/portfolio/main/images/about-photo.jpg",
     "bio": "Juan Rozo is a photographer and art-director based in Melbourne.\n\nHis work spans people, brands, and personal projects — always with a focus on\nauthentic connection, bold light, and cinematic storytelling.\n\nAvailable for freelance hire."
   },
   "clientLogos": [
@@ -57,7 +57,7 @@
   "email": "hola.rozo@gmail.com",
   "instagram": "@rozo.life",
   "instagramUrl": "https://www.instagram.com/rozo.life/",
-  "logoUrl": "https://juanrozo.com/wp-content/uploads/2024/05/Artboard-2.png",
+  "logoUrl": "/images/logo.svg",
   "name": "Juan Rozo",
   "phone": "",
   "phoneHref": "",

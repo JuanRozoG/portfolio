@@ -238,16 +238,15 @@ body:has(.lightbox.open) .cursor--active span { color: #000; }
   top: 14px;
   left: 24px;
   z-index: 200;
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: var(--size-nav);
-  letter-spacing: var(--ls-nav);
-  line-height: 48px;
-  text-transform: uppercase;
-  color: var(--color-text-light);
   text-decoration: none;
   cursor: none;
   transition: opacity 0.3s ease;
+  line-height: 0;
+}
+.site-logo img {
+  height: 20px;
+  width: auto;
+  display: block;
 }
 .site-logo:hover { opacity: 0.5; }
 
