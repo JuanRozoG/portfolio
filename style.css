@@ -347,16 +347,15 @@ body.menu-open .site-logo { opacity: 0; pointer-events: none; }
   top: 14px;
   left: 24px;
   z-index: 302;
-  font-family: var(--font-display);
-  font-weight: var(--fw);
-  font-size: var(--size-nav);
-  letter-spacing: var(--ls-nav);
-  line-height: 48px;
-  text-transform: uppercase;
-  color: #ffffff;
+  line-height: 0;
   text-decoration: none;
   cursor: none;
   transition: opacity 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.menu-name img {
+  height: 20px;
+  width: auto;
+  display: block;
 }
 .menu-name:hover { opacity: 0.4; }
 
