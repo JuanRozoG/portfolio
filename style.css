@@ -615,7 +615,7 @@ body.loaded.no-anim .intro-collage-img.revealed {
 .portfolio-grid {
   display: flex;
   gap: calc((100vw - 8vw) / 8);
-  padding: 0 4vw;
+  padding: 80px 4vw 0;
   margin-bottom: clamp(40px, 6vw, 80px);
   flex: 1;
   transition: opacity 0.3s ease;
@@ -1221,7 +1221,7 @@ body.loaded.no-anim .intro-collage-img.revealed {
   .page-grid-section { padding-top: 0; }
 
   /* Things grid: 1 column on mobile with generous side padding */
-  .portfolio-grid { gap: 16px; padding: 0 16px; }
+  .portfolio-grid { gap: 16px; padding: 80px 16px 0; }
   .portfolio-column { gap: 16px; }
 
   /* Personal carousel — mobile adjustments */
@@ -1294,7 +1294,7 @@ body.loaded.no-anim .intro-collage-img.revealed {
 }
 
 @media (max-width: 768px) and (min-width: 601px) {
-  .portfolio-grid { gap: 12px; padding: 0 12px; }
+  .portfolio-grid { gap: 12px; padding: 80px 12px 0; }
   .portfolio-column { gap: 12px; }
 }
 
