@@ -8,3 +8,6 @@ uploads/
 .DS_Store
 .vercel
 node_modules/
+.claude/memory/
+.claude/settings.local.json
+.claude/launch.json
