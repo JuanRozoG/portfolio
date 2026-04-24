@@ -178,10 +178,10 @@ body:has(.lightbox.open) .cursor--active span { color: #000; }
   will-change: transform;
 }
 .wipe-overlay.wipe-in {
-  animation: wipeIn 0.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  animation: wipeIn 0.12s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 .wipe-overlay.wipe-out {
-  animation: wipeOut 0.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  animation: wipeOut 0.7s var(--ease) forwards;
 }
 .wipe-overlay.wipe-dark {
   background: var(--color-bg-dark);
