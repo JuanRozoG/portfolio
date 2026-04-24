@@ -48,7 +48,7 @@ Available for freelance hire.`,
   sections: {"intro": {"collage": true, "name": true}, "people": {"carousel": true}, "things": {"grid": true}, "personal-v2": {"carousel": true, "counter": true}, "info": {"photo": true, "bio": true, "social": true, "clients": true}, "archive": {"grid": true}, "archive-intro-v1": {}, "archive-personal-v1": {}, "archive-intro-loader-v1": {}, "archive-filmstrip-v1": {}},
 
   // ── Page content (template-specific editable text) ──────
-  pageContent: {"intro": {"footerCta1": "Got a project?", "footerCta2": "Let's work together.", "tagline": "Melbourne based. Photographer & Art-director."}, "info": {"label": "About", "role": "Melbourne based. Photographer & Art-director.", "instagram2Label": "@babyjuanmoretime", "instagram2Url": "https://instagram.com/babyjuanmoretime"}},
+  pageContent: {"intro": {"footerCta1": "Contact", "footerCta2": "Let's talk.", "tagline": "Melbourne based. Photographer & Art-director."}, "info": {"label": "About", "role": "Melbourne based. Photographer & Art-director.", "instagram2Label": "@babyjuanmoretime", "instagram2Url": "https://instagram.com/babyjuanmoretime"}},
 
   // ── Page templates (template key per page id) ─────────────────
   pageTemplates: {"intro": "intro", "people": "carousel", "things": "grid", "personal-v2": "fullscreen-carousel", "info": "info", "archive": "archive", "archive-intro-v1": "archive-standalone", "archive-personal-v1": "archive-standalone", "archive-intro-loader-v1": "archive-standalone", "archive-filmstrip-v1": "filmstrip"},

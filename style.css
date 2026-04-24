@@ -1252,7 +1252,7 @@ body.loaded.no-anim .intro-collage-img.revealed {
     grid-template-columns: 1fr;
     min-height: auto;
   }
-  .about-img-wrap { min-height: 60vh; max-height: 60vh; }
+  .about-img-wrap { min-height: 45vh; max-height: 45vh; }
   .about-text { min-height: auto; padding: 40px 24px max(60px, calc(env(safe-area-inset-bottom, 0px) + 40px)); }
 
   .footer-cta { font-size: clamp(24px, 10vw, 40px); }
