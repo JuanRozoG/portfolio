@@ -781,7 +781,7 @@ body.loaded.no-anim .intro-collage-img.revealed {
   font-size: var(--size-caption);
   font-weight: 500;
   letter-spacing: 0.08em;
-  color: var(--text-1);
+  color: var(--color-text-light);
   z-index: 5;
   pointer-events: none;
 }

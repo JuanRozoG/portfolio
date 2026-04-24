@@ -4,6 +4,10 @@
  * Loaded automatically by server.py for standalone pages.
  */
 
+:root {
+  --color-red: var(--color-red);
+}
+
 /* ── Custom cursor ──────────────────────────────────────── */
 body { cursor: none; }
 button, a { cursor: none; }
@@ -13,7 +17,7 @@ button, a { cursor: none; }
   top: -5px; left: -5px;
   width: 10px; height: 10px;
   border-radius: 50%;
-  border: 1.5px solid #ff3232;
+  border: 1.5px solid var(--color-red);
   background: transparent;
   pointer-events: none;
   z-index: 9999;
@@ -41,16 +45,16 @@ button, a { cursor: none; }
 .cursor--link {
   width: 28px; height: 28px;
   top: -14px; left: -14px;
-  background: #ff3232;
-  border-color: #ff3232;
+  background: var(--color-red);
+  border-color: var(--color-red);
 }
 .cursor--active {
   width: auto; height: auto;
   top: -4px; left: 4px;
   padding: 8px 16px;
   border-radius: 0;
-  border-color: #ff3232;
-  background: #ff3232;
+  border-color: var(--color-red);
+  background: var(--color-red);
 }
 .cursor--active span { opacity: 1; color: #000; }
 .cursor--label {
@@ -58,19 +62,19 @@ button, a { cursor: none; }
   top: -4px; left: 4px;
   padding: 6px 14px;
   border-radius: 0;
-  background: #ff3232;
-  border-color: #ff3232;
+  background: var(--color-red);
+  border-color: var(--color-red);
 }
 .cursor--label span { opacity: 1; color: #000; }
 
 /* Cursor inside menu overlay — red on black */
 body.menu-open .cursor {
-  border-color: #ff3232 !important;
+  border-color: var(--color-red) !important;
   background: transparent !important;
 }
 body.menu-open .cursor--link {
-  background: #ff3232 !important;
-  border-color: #ff3232 !important;
+  background: var(--color-red) !important;
+  border-color: var(--color-red) !important;
 }
 
 /* ── Menu nav — one item per line, left-aligned, vertically centred ── */
