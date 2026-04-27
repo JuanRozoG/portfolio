@@ -2045,30 +2045,26 @@
 
             // Preview image reveal
             if (previewEl) {
-              const pageId  = link.dataset.page;
-              const ownGallery = (typeof CONFIG !== 'undefined' && CONFIG.pageGalleries?.[pageId]) || [];
-              // Fall back to people → intro when page has no gallery (e.g. Info)
-              const gallery = ownGallery.length > 0 ? ownGallery
-                : (CONFIG.pageGalleries?.['people'] || CONFIG.pageGalleries?.['intro'] || []);
+              const pageId = link.dataset.page;
+              const gallery = CONFIG.pageGalleries?.[pageId] || [];
+              // Info page → about photo; others → random pick from gallery
+              let imgUrl;
+              if (pageId === 'info') {
+                imgUrl = CONFIG.about?.photo || '';
+              } else if (gallery.length > 0) {
+                const pick = gallery[Math.floor(Math.random() * gallery.length)];
+                imgUrl = pick.image || pick.url || '';
+              } else {
+                imgUrl = '';
+              }
               clearTimeout(previewTimer);
-              if (gallery.length > 0) {
-                const imgUrl = gallery[0].image || gallery[0].url || '';
-                if (imgUrl) {
-                  if (previewEl.getAttribute('data-current') !== imgUrl) {
-                    previewEl.classList.remove('visible');
-                    previewTimer = setTimeout(() => {
-                      previewEl.src = imgUrl;
-                      previewEl.setAttribute('data-current', imgUrl);
-                      // Force reflow so transition fires after src update
-                      void previewEl.offsetHeight;
-                      previewEl.classList.add('visible');
-                    }, 30);
-                  } else {
-                    previewEl.classList.add('visible');
-                  }
-                } else {
-                  previewEl.classList.remove('visible');
-                }
+              if (imgUrl) {
+                previewEl.classList.remove('visible');
+                previewTimer = setTimeout(() => {
+                  previewEl.src = imgUrl;
+                  void previewEl.offsetHeight;
+                  previewEl.classList.add('visible');
+                }, 30);
               } else {
                 previewEl.classList.remove('visible');
               }
