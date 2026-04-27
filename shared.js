@@ -157,10 +157,8 @@
         overlay.classList.add('has-item-hover');
 
         if (previewEl) {
-          var pageId     = link.dataset.page;
-          var ownGallery = (typeof CONFIG !== 'undefined' && CONFIG.pageGalleries && CONFIG.pageGalleries[pageId]) || [];
-          var gallery    = ownGallery.length > 0 ? ownGallery
-            : ((CONFIG.pageGalleries && (CONFIG.pageGalleries['people'] || CONFIG.pageGalleries['intro'])) || []);
+          var pageId  = link.dataset.page;
+          var gallery = (typeof CONFIG !== 'undefined' && CONFIG.pageGalleries && CONFIG.pageGalleries[pageId]) || [];
           clearTimeout(previewTimer);
           if (gallery.length > 0) {
             var imgUrl = gallery[0].image || gallery[0].url || '';
