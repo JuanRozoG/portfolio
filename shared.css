@@ -192,8 +192,8 @@ body.menu-open .cursor--link {
 /* ── Preview image ──────────────────────────────────────── */
 .menu-preview {
   position: absolute; top: 76px; right: clamp(40px, 7vw, 100px);
-  width: clamp(160px, 22vw, 300px); aspect-ratio: 2/3;
-  object-fit: cover; object-position: center top;
+  max-width: clamp(160px, 22vw, 300px); max-height: 60vh;
+  width: auto; height: auto;
   opacity: 0; pointer-events: none; z-index: 300;
   transition: opacity 0.55s cubic-bezier(0.25, 0.1, 0.25, 1),
               transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
