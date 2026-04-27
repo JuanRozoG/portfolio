@@ -159,23 +159,25 @@
         if (previewEl) {
           var pageId  = link.dataset.page;
           var gallery = (typeof CONFIG !== 'undefined' && CONFIG.pageGalleries && CONFIG.pageGalleries[pageId]) || [];
-          // For pages without a gallery (e.g. info), fall back to the about photo
-          var imgUrl = gallery.length > 0
-            ? (gallery[0].image || gallery[0].url || '')
-            : (pageId === 'info' && CONFIG.about && CONFIG.about.photo ? CONFIG.about.photo : '');
+          // Info page → always use the about photo; others → random pick from gallery
+          var imgUrl;
+          if (pageId === 'info') {
+            imgUrl = (CONFIG.about && CONFIG.about.photo) ? CONFIG.about.photo : '';
+          } else if (gallery.length > 0) {
+            var pick = gallery[Math.floor(Math.random() * gallery.length)];
+            imgUrl = pick.image || pick.url || '';
+          } else {
+            imgUrl = '';
+          }
           clearTimeout(previewTimer);
           if (imgUrl) {
-            if (previewEl.getAttribute('data-current') !== imgUrl) {
-              previewEl.classList.remove('visible');
-              previewTimer = setTimeout(function () {
-                previewEl.src = imgUrl;
-                previewEl.setAttribute('data-current', imgUrl);
-                void previewEl.offsetHeight;
-                previewEl.classList.add('visible');
-              }, 30);
-            } else {
+            previewEl.classList.remove('visible');
+            previewTimer = setTimeout(function () {
+              previewEl.src = imgUrl;
+              previewEl.setAttribute('data-current', imgUrl);
+              void previewEl.offsetHeight;
               previewEl.classList.add('visible');
-            }
+            }, 30);
           } else {
             previewEl.classList.remove('visible');
           }
