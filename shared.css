@@ -239,3 +239,19 @@ body.menu-open .cursor--link {
   .menu-overlay.has-item-hover .menu-name,
   .menu-overlay.has-item-hover .menu-footer { opacity: 1 !important; transition: none !important; }
 }
+
+/* ── Focus — keyboard navigation ───────────────────────────── */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--color-red);
+  outline-offset: 3px;
+}
+
+/* ── Reduced motion ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
