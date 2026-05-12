@@ -952,8 +952,12 @@ def serve_static(filename):
             abort(403)
     except Exception:
         abort(403)
-    # Serve exact static file if it exists
+    # Serve exact static file if it exists.
+    # Root-level .html files go through serve_html() so shared.css/js are injected.
+    # Sub-directory files (admin/, data/, etc.) are served as-is.
     if path.is_file():
+        if path.suffix == '.html' and path.parent == BASE_DIR.resolve():
+            return serve_html(path)
         return send_from_directory(str(BASE_DIR), filename)
     # ── Slug-based routing ──────────────────────────────────────
     # Allows clean URLs like /people, /personal-work, /archive-v1
