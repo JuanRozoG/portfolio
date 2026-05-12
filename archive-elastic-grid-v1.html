@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Juan Rozo — Grid</title>
+  <link rel="icon" type="image/png" href="https://juanrozo.com/wp-content/uploads/2024/05/Artboard-2.png" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@900&display=swap');
+
+    @font-face {
+      font-family: NeueHaasGroteskDisplay;
+      src: url('/fonts/NeueHaasGroteskDisplay-Black.woff2') format('woff2');
+      font-weight: 900;
+      font-display: swap;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --font-display: NeueHaasGroteskDisplay, 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+      --fw: 900;
+      --red: #ff3232;
+      --page-padding: 5vw;
+      --c-gap: 2vw;
+      --r-gap: 2vw;
+      --column-size: 120px;
+      --column-count: 3;
+    }
+
+    html {
+      font-size: 14px;
+    }
+
+    html, body {
+      width: 100%;
+      background: #fff;
+    }
+
+    body {
+      font-family: var(--font-display);
+      font-weight: var(--fw);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      animation: bodyReveal 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Loading screen — GSAP imagesloaded removes .loading class */
+    @media (scripting: enabled) {
+      body.loading::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        background: #fff;
+      }
+      body.loading::after {
+        content: '';
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 80px;
+        height: 1px;
+        margin-left: -40px;
+        z-index: 10001;
+        background: rgba(10, 10, 10, 0.2);
+        animation: loaderAnim 1.5s ease-in-out infinite alternate forwards;
+      }
+    }
+
+    @keyframes loaderAnim {
+      0%   { transform: scaleX(0);   transform-origin: 0% 50%; }
+      50%  { transform: scaleX(1);   transform-origin: 0% 50%; }
+      50.1%{ transform: scaleX(1);   transform-origin: 100% 50%; }
+      100% { transform: scaleX(0);   transform-origin: 100% 50%; }
+    }
+
+    @keyframes bodyReveal {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* ── Grid layout ──────────────────────────────────────────── */
+    #smooth-wrapper {
+      overflow: hidden;
+      position: fixed;
+      inset: 0;
+    }
+
+    #smooth-content {
+      will-change: transform;
+    }
+
+    .eg-grid {
+      display: grid;
+      padding: 110px var(--page-padding) 8rem;
+      margin: 0 auto;
+      grid-template-columns: repeat(var(--column-count), minmax(var(--column-size), 1fr));
+      column-gap: var(--c-gap);
+      row-gap: var(--r-gap);
+    }
+
+    @media screen and (min-width: 65em) {
+      :root { --column-count: 5; }
+    }
+
+    @media screen and (min-width: 90em) {
+      :root { --column-count: 7; }
+    }
+
+    .eg-grid__column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--r-gap);
+    }
+
+    .eg-grid__item {
+      margin: 0;
+      cursor: none;
+    }
+
+    .eg-grid__item-img {
+      aspect-ratio: 4 / 5;
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+      display: block;
+      width: 100%;
+    }
+
+    .eg-grid__item-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .eg-grid__item-caption {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 0.4rem;
+      color: rgba(10,10,10,0.35);
+    }
+
+    /* ── Chrome UI ──────────────────────────────────────────────── */
+    .ui-name {
+      position: fixed;
+      top: max(21px, env(safe-area-inset-top, 21px));
+      left: 24px;
+      z-index: 200;
+      line-height: 0;
+      color: #0a0a0a;
+      text-decoration: none;
+      transition: opacity 0.3s ease;
+    }
+    .ui-name:hover { opacity: 0.5; }
+
+    /* Staggered UI entrance */
+    .ui-name, .menu-btn {
+      opacity: 0;
+      animation: uiIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+    }
+
+    @keyframes uiIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Empty state */
+    .eg-empty {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: rgba(10,10,10,.3);
+    }
+
+    /* Mobile: tighter gaps */
+    @media (max-width: 600px) {
+      :root {
+        --c-gap: 3vw;
+        --r-gap: 3vw;
+        --page-padding: 3vw;
+      }
+      .eg-grid { padding-top: 90px; }
+    }
+  </style>
+</head>
+<body class="loading">
+
+  <!-- ── MENU BUTTON (+, red, top-right) ──────────────────────── -->
+  <button class="menu-btn" id="menu-btn" aria-label="Menu">+</button>
+
+  <!-- ── SLIDE-UP MENU ──────────────────────────────────────────── -->
+  <div class="menu-overlay" id="menu-overlay">
+    <a href="/" class="menu-name" id="menu-name"><img src="/images/logo.svg" alt="Juan Rozo" /></a>
+    <nav class="menu-nav" id="menu-nav"></nav>
+    <div class="menu-footer" id="menu-footer"></div>
+    <button class="menu-close" id="menu-close" aria-label="Close menu">+</button>
+  </div>
+
+  <!-- ── Logo top-left ──────────────────────────────────────────── -->
+  <a href="/" class="ui-name"><img src="/images/logo.svg" alt="Juan Rozo" style="height:40px;width:auto;display:block;" /></a>
+
+  <!-- ── ScrollSmoother wrapper ─────────────────────────────────── -->
+  <div id="smooth-wrapper">
+    <div id="smooth-content">
+      <div class="eg-grid" id="eg-grid">
+        <!-- populated by JS from CONFIG.pageGalleries -->
+      </div>
+    </div>
+  </div>
+
+  <!-- GSAP stack -->
+  <script src="/js/elastic-grid/gsap.min.js"></script>
+  <script src="/js/elastic-grid/ScrollTrigger.min.js"></script>
+  <script src="/js/elastic-grid/ScrollSmoother.min.js"></script>
+  <script src="/js/elastic-grid/imagesloaded.pkgd.min.js"></script>
+
+  <!-- Portfolio config -->
+  <script src="/config.js"></script>
+
+  <script>
+  (() => {
+    'use strict';
+
+    /* ── Pull images from config ───────────────────────────────── */
+    const pageId   = 'elastic-grid-v1';
+    const galleries = CONFIG.pageGalleries || {};
+    let pool = galleries[pageId] || [];
+
+    // Fallback: use all available images if this page has no gallery yet
+    if (!pool.length) {
+      pool = Object.values(galleries).flat();
+    }
+
+    const grid = document.getElementById('eg-grid');
+
+    if (!pool.length) {
+      document.body.classList.remove('loading');
+      grid.innerHTML = '';
+      document.body.insertAdjacentHTML('beforeend',
+        '<div class="eg-empty">No images available</div>');
+      return;
+    }
+
+    /* ── Build grid items ──────────────────────────────────────── */
+    pool.forEach(item => {
+      const src = (item.image || item.url || '');
+      const srcFmt = src + (src.includes('?') ? '&' : '?') + 'auto=format&w=800&q=85';
+      const caption = item.title || item.alt || '';
+
+      const figure = document.createElement('figure');
+      figure.className = 'eg-grid__item';
+
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'eg-grid__item-img';
+
+      const img = document.createElement('img');
+      img.src = srcFmt;
+      img.alt = caption;
+      img.loading = 'lazy';
+      img.draggable = false;
+
+      imgWrap.appendChild(img);
+      figure.appendChild(imgWrap);
+
+      if (caption) {
+        const cap = document.createElement('figcaption');
+        cap.className = 'eg-grid__item-caption';
+        cap.textContent = caption;
+        figure.appendChild(cap);
+      }
+
+      grid.appendChild(figure);
+    });
+
+    /* ── Elastic scroll engine (GSAP) ─────────────────────────── */
+    gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+
+    const smoother = ScrollSmoother.create({
+      wrapper:         '#smooth-wrapper',
+      content:         '#smooth-content',
+      smooth:          1,
+      effects:         true,
+      normalizeScroll: true,
+    });
+
+    const originalItems = Array.from(grid.querySelectorAll('.eg-grid__item'));
+
+    const baseLag  = 0.5;  // lag on the center column
+    const lagScale = 0.12; // additional lag per column from center
+
+    function groupItemsByColumn() {
+      const cols = window.getComputedStyle(grid)
+        .getPropertyValue('grid-template-columns')
+        .trim().split(' ').filter(Boolean).length;
+
+      const columns = Array.from({ length: cols }, () => []);
+      grid.querySelectorAll('.eg-grid__item').forEach((item, i) => {
+        columns[i % cols].push(item);
+      });
+      return { columns, numColumns: cols };
+    }
+
+    function clearGrid() {
+      grid.querySelectorAll('.eg-grid__column').forEach(c => c.remove());
+      originalItems.forEach(item => grid.appendChild(item));
+    }
+
+    function buildGrid(columns, numColumns) {
+      const frag   = document.createDocumentFragment();
+      const mid    = (numColumns - 1) / 2;
+      const result = [];
+
+      columns.forEach((column, i) => {
+        const distance = Math.abs(i - mid);
+        const lag      = baseLag + distance * lagScale;
+        const col      = document.createElement('div');
+        col.className  = 'eg-grid__column';
+        column.forEach(item => col.appendChild(item));
+        frag.appendChild(col);
+        result.push({ element: col, lag });
+      });
+
+      grid.appendChild(frag);
+      return result;
+    }
+
+    function applyLag(colContainers) {
+      colContainers.forEach(({ element, lag }) => {
+        smoother.effects(element, { speed: 1, lag });
+      });
+    }
+
+    let currentCols = null;
+
+    function init() {
+      clearGrid();
+      const { columns, numColumns } = groupItemsByColumn();
+      currentCols = numColumns;
+      const containers = buildGrid(columns, numColumns);
+      applyLag(containers);
+    }
+
+    window.addEventListener('resize', () => {
+      const n = window.getComputedStyle(grid)
+        .getPropertyValue('grid-template-columns')
+        .trim().split(' ').filter(Boolean).length;
+      if (n !== currentCols) init();
+    });
+
+    /* ── Wait for images, then boot ────────────────────────────── */
+    imagesLoaded(grid, () => {
+      document.body.classList.remove('loading');
+      init();
+    });
+
+    // Safety: remove loading state after 3s regardless
+    setTimeout(() => {
+      document.body.classList.remove('loading');
+      if (!currentCols) init();
+    }, 3000);
+
+  })();
+  </script>
+
+  <!-- Menu: handled by shared.js (injected by server.py) -->
+</body>
+</html>

@@ -44,6 +44,7 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp", "svg", "avif"}
 CORE_PAGES         = {
     "intro", "people", "things", "personal-v2", "info", "archive",
     "archive-intro-v1", "archive-personal-v1", "archive-intro-loader-v1", "archive-filmstrip-v1",
+    "elastic-grid-v1",
 }
 
 # ── Logging ────────────────────────────────────────────────────────────────────
@@ -872,7 +873,7 @@ def api_delete_upload(filename):
 def serve_index():
     pages = read_json("pages.json") or []
     home  = next((p for p in pages if p.get("isHome")), None)
-    if home and home.get("template") in ("archive-standalone", "filmstrip"):
+    if home and home.get("template") in ("archive-standalone", "filmstrip", "elastic-grid"):
         html_path = BASE_DIR / f"{home['id']}.html"
         if html_path.is_file():
             return serve_html(html_path)
@@ -966,7 +967,7 @@ def serve_static(filename):
     if page:
         template = page.get("template", "")
         page_id  = page["id"]
-        if template in ("archive-standalone", "filmstrip"):
+        if template in ("archive-standalone", "filmstrip", "elastic-grid"):
             # Standalone pages have a physical .html file named after their id
             html_path = BASE_DIR / f"{page_id}.html"
             if html_path.is_file():

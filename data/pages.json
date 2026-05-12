@@ -886,5 +886,23 @@
     "status": "published",
     "template": "filmstrip",
     "title": "Archive — Filmstrip v1"
+  },
+  {
+    "id": "elastic-grid-v1",
+    "title": "Elastic Grid",
+    "slug": "grid-v2",
+    "template": "elastic-grid",
+    "status": "published",
+    "inMenu": false,
+    "isHome": false,
+    "menuOrder": 99,
+    "gallery": [],
+    "sections": {},
+    "seo": {
+      "pageTitle": "Elastic Grid",
+      "metaDescription": "",
+      "ogImage": "",
+      "indexable": true
+    }
   }
 ]

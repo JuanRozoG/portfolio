@@ -16,6 +16,7 @@ const TEMPLATES = [
   { value: 'archive',             label: 'Archive'                            },
   { value: 'archive-standalone',  label: 'Archive — Standalone (external)'   },
   { value: 'filmstrip',           label: 'Filmstrip Gallery'                  },
+  { value: 'elastic-grid',        label: 'Elastic Grid Scroll'                },
   { value: 'custom',              label: 'Custom'                             },
 ];
 
@@ -32,7 +33,7 @@ function templateOptions(selected) {
  * - all other pages live inside index.html at /#<slug-or-id>
  */
 function pagePreviewUrl(page) {
-  if (page.template === 'archive-standalone' || page.template === 'filmstrip') {
+  if (page.template === 'archive-standalone' || page.template === 'filmstrip' || page.template === 'elastic-grid') {
     return `/${page.id}.html`;
   }
   // Main SPA pages: open root; hash is for informational clarity only
