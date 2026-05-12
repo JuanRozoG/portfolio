@@ -1403,6 +1403,67 @@ body.loaded.no-anim .intro-collage-img.revealed {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   RIT — RepeatingImageTransition panel + movers (all pages)
+   ══════════════════════════════════════════════════════════════ */
+.rit-panel {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2000;
+  background: #fff;
+}
+
+.rit-panel__img {
+  overflow: hidden;
+  will-change: clip-path;
+}
+
+.rit-panel__img img {
+  display: block;
+  max-height: 85vh;
+  max-width: 85vw;
+  width: auto;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Close button — mirrors .menu-btn position, appears above panel */
+.rit-panel__close {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top, 14px));
+  right: 24px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 48px;
+  line-height: 1;
+  color: var(--color-red);
+  cursor: none;
+  z-index: 2001;
+  opacity: 0;
+  transform: rotate(45deg);
+  transition: opacity 0.2s ease;
+}
+.rit-panel__close:hover { opacity: 0.5; }
+
+/* Flying mover copies */
+.rit-mover {
+  position: fixed;
+  background-size: cover;
+  background-position: 50% 50%;
+  will-change: clip-path, opacity;
+  pointer-events: none;
+  z-index: 1500;
+}
+
+/* ══════════════════════════════════════════════════════════════
    FOCUS — keyboard navigation
    Only shows for keyboard users; never on mouse/touch interaction.
    ══════════════════════════════════════════════════════════════ */

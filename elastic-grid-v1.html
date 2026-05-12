@@ -201,11 +201,9 @@
       position: fixed;
       inset: 0;
       margin: 0;
-      padding: max(80px, env(safe-area-inset-top, 80px)) var(--page-padding) 3rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 4vw;
       opacity: 0;
       pointer-events: none;
       z-index: 2000;
@@ -213,47 +211,37 @@
     }
 
     .rit-panel__img {
-      flex-shrink: 0;
       overflow: hidden;
       will-change: clip-path;
-      /* sized by its <img> child — natural aspect ratio */
     }
 
     .rit-panel__img img {
       display: block;
-      max-height: min(78vh, 62vw);
-      max-width: 62vw;
+      max-height: 85vh;
+      max-width: 85vw;
       width: auto;
       height: auto;
-    }
-
-    .rit-panel__content {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      align-items: flex-start;
-    }
-
-    .rit-panel__title {
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: rgba(10,10,10,0.35);
-      margin: 0;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .rit-panel__close {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top, 14px));
+      right: 24px;
       background: none;
       border: 0;
       padding: 0;
       font-family: var(--font-display);
       font-weight: 900;
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      font-size: 48px;
+      line-height: 1;
       cursor: none;
       color: var(--red);
+      z-index: 2001;
+      opacity: 0;
+      transform: rotate(45deg);
       transition: opacity 0.2s ease;
     }
     .rit-panel__close:hover { opacity: 0.5; }
@@ -265,17 +253,7 @@
       background-position: 50% 50%;
       will-change: clip-path, opacity;
       pointer-events: none;
-    }
-
-    @media (max-width: 600px) {
-      .rit-panel {
-        flex-direction: column;
-        padding-top: max(80px, env(safe-area-inset-top, 80px));
-      }
-      .rit-panel__img img {
-        max-height: min(55vh, 90vw);
-        max-width: 90vw;
-      }
+      z-index: 1500;
     }
   </style>
 </head>
@@ -300,10 +278,7 @@
     <div class="rit-panel__img" id="rit-panel-img">
       <img id="rit-panel-img-el" alt="" draggable="false" />
     </div>
-    <figcaption class="rit-panel__content" id="rit-panel-content">
-      <h3 class="rit-panel__title" id="rit-panel-title"></h3>
-      <button type="button" class="rit-panel__close" id="rit-panel-close" aria-label="Close preview">Close</button>
-    </figcaption>
+    <button type="button" class="rit-panel__close" id="rit-panel-close" aria-label="Close">+</button>
   </figure>
 
   <!-- ── ScrollSmoother wrapper ─────────────────────────────────── -->
@@ -368,14 +343,6 @@
 
       imgWrap.appendChild(img);
       figure.appendChild(imgWrap);
-
-      if (caption) {
-        const cap = document.createElement('figcaption');
-        cap.className = 'eg-grid__item-caption';
-        cap.textContent = caption;
-        figure.appendChild(cap);
-      }
-
       grid.appendChild(figure);
     });
 
@@ -501,11 +468,9 @@
     const lerp = (a, b, t) => a + (b - a) * t;
 
     /* ── DOM refs ──────────────────────────────────────────────── */
-    const panel        = document.getElementById('rit-panel');
-    const panelImg     = document.getElementById('rit-panel-img');
-    const panelContent = document.getElementById('rit-panel-content');
-    const panelTitle   = document.getElementById('rit-panel-title');
-    const panelClose   = document.getElementById('rit-panel-close');
+    const panel      = document.getElementById('rit-panel');
+    const panelImg   = document.getElementById('rit-panel-img');
+    const panelClose = document.getElementById('rit-panel-close');
 
     let isAnimating = false;
     let isPanelOpen = false;
@@ -616,20 +581,18 @@
       gsap.delayedCall(cleanupDelay, () => document.querySelectorAll('.rit-mover').forEach(m => m.remove()));
 
       // Reveal panel
-      gsap.set(panelContent, { opacity: 0 });
       gsap.set(panel, { opacity: 1, pointerEvents: 'auto' });
+      gsap.set(panelClose, { opacity: 0 });
       gsap.timeline({
         defaults: { duration: cfg.stepDuration * cfg.panelRevealDurationFactor, ease: cfg.panelRevealEase }
       })
         .fromTo(endEl,
           { clipPath: cp.hide },
           { clipPath: cp.reveal, delay: cfg.steps * cfg.stepInterval })
-        .fromTo(panelContent,
-          { y: 20 },
-          { duration: 0.8, ease: 'expo', opacity: 1, y: 0,
-            delay: cfg.steps * cfg.stepInterval,
+        .to(panelClose,
+          { opacity: 1, duration: 0.4, ease: 'sine',
             onComplete: () => { isAnimating = false; isPanelOpen = true; } },
-          '<-=.15');
+          '<');
     };
 
     /* ── Handle click on grid item ─────────────────────────────── */
@@ -640,14 +603,13 @@
 
       if (window._gridSmoother) window._gridSmoother.paused(true);
 
-      const { imgURL, title, gridSrc, src } = extractData(item);
+      const { imgURL, gridSrc, src } = extractData(item);
       const panelImgEl = document.getElementById('rit-panel-img-el');
 
-      // Use grid-res (already cached) so the <img> is sized at natural
+      // Use grid-res (already cached) so the <img> is sized at its natural
       // aspect ratio in one rAF — no waiting for the high-res fetch.
-      panelImgEl.alt = title;
       panelImgEl.src = gridSrc;
-      panelTitle.textContent = title;
+      panelImgEl.alt = '';
 
       const allItems = document.querySelectorAll('.eg-grid__item');
       const delays   = staggerDelays(item, allItems);
@@ -681,9 +643,10 @@
           if (window._gridSmoother) window._gridSmoother.paused(false);
         }
       })
-        .to(panel,    { opacity: 0 })
-        .set(panel,   { pointerEvents: 'none' })
+        .to(panel,   { opacity: 0 })
+        .set(panel,  { pointerEvents: 'none' })
         .set(panelImg, { clipPath: 'inset(0% 0% 100% 0%)' })
+        .set(panelClose, { opacity: 0 })
         .call(() => {
           const el = document.getElementById('rit-panel-img-el');
           if (el) el.src = '';

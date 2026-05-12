@@ -6,7 +6,7 @@
   <title>Juan Rozo</title>
   <meta name="description" content="Juan Rozo — Photographer & Art-director. Melbourne based." />
   <link rel="icon" type="image/png" href="https://juanrozo.com/wp-content/uploads/2024/05/Artboard-2.png" />
-  <link rel="stylesheet" href="style.css?v=14" />
+  <link rel="stylesheet" href="style.css?v=15" />
   <meta property="og:image" content="https://juanrozo.com/wp-content/uploads/2025/01/JRG9384-Edit-3-scaled.jpg" />
 </head>
 <body class="page-intro">
@@ -123,6 +123,17 @@
       <p class="lightbox-subtitle" id="lb-subtitle"></p>
     </div>
   </div>
+
+  <!-- GSAP core — required for RIT transitions -->
+  <script src="/js/elastic-grid/gsap.min.js"></script>
+
+  <!-- ── RIT fullscreen panel ──────────────────────────────── -->
+  <figure class="rit-panel" id="rit-panel">
+    <div class="rit-panel__img" id="rit-panel-img">
+      <img id="rit-panel-img-el" alt="" draggable="false" />
+    </div>
+    <button type="button" class="rit-panel__close" id="rit-panel-close" aria-label="Close">+</button>
+  </figure>
 
   <script src="config.js"></script>
   <script>
@@ -385,6 +396,14 @@
 
         div.innerHTML = `<img src="${proj.image}?auto=format&w=500&q=80" alt="${proj.title}" loading="eager" />`;
         collageContainer.appendChild(div);
+      });
+
+      // Add click-to-expand on each collage image via RIT
+      results.forEach(({ proj }, i) => {
+        const div = collageContainer.children[i];
+        if (div) {
+          div.addEventListener('click', () => openRIT(proj, div.querySelector('img') || div));
+        }
       });
 
       // Trigger intro animation after images are placed
@@ -775,10 +794,10 @@
       // Resize
       window.addEventListener('resize', updateCarousel);
 
-      // Click: active opens lightbox, others navigate
+      // Click: active opens RIT fullscreen, others navigate
       track.querySelectorAll('.carousel-slide').forEach((slide, i) => {
         slide.addEventListener('click', () => {
-          if (i === carouselIdx) openLightbox(i, items);
+          if (i === carouselIdx) openRIT(items[i], slide.querySelector('img') || slide);
           else goToSlide(i);
         });
       });
@@ -885,9 +904,9 @@
                  alt="${proj.title}" loading="${idx < 6 ? 'eager' : 'lazy'}" />
           </div>
         `;
-        div.addEventListener('click', () => openLightbox(idx, items));
+        div.addEventListener('click', () => openRIT(proj, div.querySelector('img') || div));
         div.addEventListener('keydown', e => {
-          if (e.key === 'Enter' || e.key === ' ') openLightbox(idx, items);
+          if (e.key === 'Enter' || e.key === ' ') openRIT(proj, div.querySelector('img') || div);
         });
 
         // Round-robin: (idx + 1) % 3 puts extras in middle column
@@ -948,10 +967,10 @@
         img.style.cssText = `height:${imgH()}px;width:auto;max-width:72vw;object-fit:contain;display:block;pointer-events:none;`;
         slide.appendChild(img);
 
-        // Click: center image → lightbox; side image → navigate
+        // Click: center image → RIT fullscreen; side image → navigate
         slide.addEventListener('click', () => {
           if (didDrag) { didDrag = false; return; }
-          if (idx === activeIdx) openLightbox(idx, items);
+          if (idx === activeIdx) openRIT(items[idx], slide.querySelector('img') || slide);
           else goTo(idx);
         });
 
@@ -1285,7 +1304,7 @@
         slide.addEventListener('click', () => {
           if (didDrag) { didDrag = false; return; }
           if (idx === activeIndex) {
-            openLightbox(idx, items);
+            openRIT(items[idx], slide.querySelector('img') || slide);
           } else {
             goTo(idx);
           }
@@ -1582,7 +1601,7 @@
         cell.appendChild(wrap);
         grid.appendChild(cell);
 
-        cell.addEventListener('click', () => openArchiveZoom(i));
+        cell.addEventListener('click', () => openRIT(images[i], cell.querySelector('img') || cell));
 
         if (!isTouch) {
           cell.addEventListener('mouseenter', () => {
@@ -1846,6 +1865,129 @@
         if (cell) { cell.style.transition = 'none'; cell.style.opacity = ''; }
       }
     }
+
+    /* ════════════════════════════════════════════════════════
+       RIT — RepeatingImageTransition engine (all pages)
+       ════════════════════════════════════════════════════════ */
+    const ritPanel    = document.getElementById('rit-panel');
+    const ritPanelImg = document.getElementById('rit-panel-img');
+    const ritImgEl    = document.getElementById('rit-panel-img-el');
+    const ritClose    = document.getElementById('rit-panel-close');
+
+    let ritAnimating = false;
+    let ritOpen      = false;
+
+    function openRIT(item, sourceEl) {
+      if (ritAnimating || ritOpen || typeof gsap === 'undefined') return;
+      ritAnimating = true;
+
+      // Accept either an <img> directly or a wrapper containing one
+      const imgEl = sourceEl instanceof HTMLImageElement
+        ? sourceEl : sourceEl.querySelector('img');
+      if (!imgEl) { ritAnimating = false; return; }
+
+      const gridSrc = imgEl.src;
+      const hiSrc   = gridSrc.replace(/w=\d+/, 'w=1600').replace(/q=\d+/, 'q=90');
+      const imgURL  = 'url("' + gridSrc + '")';
+
+      // Set panel image to cached grid-res → natural dimensions known in one rAF
+      ritImgEl.src = gridSrc;
+      ritImgEl.alt = '';
+
+      requestAnimationFrame(() => {
+        _ritRunTransition(imgEl, imgURL);
+        // Silently upgrade to high-res once movers finish
+        const hi = new Image();
+        hi.onload = () => { if (ritOpen) ritImgEl.src = hiSrc; };
+        hi.src = hiSrc;
+      });
+    }
+
+    function _ritRunTransition(startEl, imgURL) {
+      const lerp = (a, b, t) => a + (b - a) * t;
+      const STEPS = 5, DUR = 0.35, INT = 0.05, PAUSE = 0.14;
+      const cp = {
+        from:   'inset(100% 0% 0% 0%)',
+        reveal: 'inset(0% 0% 0% 0%)',
+        hide:   'inset(0% 0% 100% 0%)',
+      };
+
+      const startR = startEl.getBoundingClientRect();
+      const endR   = ritPanelImg.getBoundingClientRect();
+
+      // Build interpolated path between source and panel rects
+      const pts = [];
+      for (let i = 0; i < STEPS + 2; i++) {
+        const t  = i / (STEPS + 1);
+        const w  = lerp(startR.width,  endR.width,  t);
+        const h  = lerp(startR.height, endR.height, t);
+        const cx = lerp(startR.left + startR.width  / 2, endR.left + endR.width  / 2, t);
+        const cy = lerp(startR.top  + startR.height / 2, endR.top  + endR.height / 2, t);
+        pts.push({ left: cx - w / 2, top: cy - h / 2, width: w, height: h });
+      }
+      pts.shift(); pts.pop(); // trim source + destination endpoints
+
+      pts.forEach((step, idx) => {
+        const mover = document.createElement('div');
+        mover.className = 'rit-mover';
+        gsap.set(mover, {
+          backgroundImage: imgURL,
+          left: step.left, top: step.top, width: step.width, height: step.height,
+          clipPath: cp.hide, zIndex: 1500 + idx,
+        });
+        document.body.appendChild(mover);
+
+        gsap.timeline({ delay: idx * INT })
+          .fromTo(mover,
+            { opacity: 0.4, clipPath: cp.hide },
+            { opacity: 1,   clipPath: cp.reveal, duration: DUR, ease: 'sine.in' })
+          .to(mover,
+            { clipPath: cp.from, duration: DUR, ease: 'sine' },
+            '+=' + PAUSE);
+      });
+
+      // Remove movers after all have exited
+      gsap.delayedCall(STEPS * INT + DUR * 2 + PAUSE + 0.1, () => {
+        document.querySelectorAll('.rit-mover').forEach(m => m.remove());
+      });
+
+      // Reveal panel
+      gsap.set(ritPanel,  { opacity: 1, pointerEvents: 'auto' });
+      gsap.set(ritClose,  { opacity: 0 });
+      gsap.timeline({ defaults: { duration: DUR * 2, ease: 'sine.inOut' } })
+        .fromTo(ritPanelImg,
+          { clipPath: cp.hide },
+          { clipPath: cp.reveal, delay: STEPS * INT })
+        .to(ritClose,
+          { opacity: 1, duration: 0.4, ease: 'sine',
+            onComplete: () => { ritAnimating = false; ritOpen = true; } },
+          '<');
+    }
+
+    function closeRIT() {
+      if (ritAnimating || !ritOpen || typeof gsap === 'undefined') return;
+      ritAnimating = true;
+      gsap.timeline({
+        defaults: { duration: 0.35, ease: 'expo' },
+        onComplete: () => {
+          ritAnimating = false;
+          ritOpen = false;
+          ritImgEl.src = '';
+        },
+      })
+        .to(ritPanel,   { opacity: 0 })
+        .set(ritPanel,  { pointerEvents: 'none' })
+        .set(ritPanelImg, { clipPath: 'inset(0% 0% 100% 0%)' })
+        .set(ritClose,  { opacity: 0 });
+    }
+
+    if (ritClose) ritClose.addEventListener('click', closeRIT);
+    if (ritPanel) ritPanel.addEventListener('click', e => {
+      if (e.target === ritPanel) closeRIT();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && ritOpen && !ritAnimating) closeRIT();
+    });
 
     /* ════════════════════════════════════════════════════════
        LIGHTBOX — slides up from bottom
