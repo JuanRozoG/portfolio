@@ -1,5 +1,5 @@
 // AUTO-GENERATED — Edit content via /admin/  Do not edit manually.
-// Generated: 2026-04-10 07:46:01
+// Generated: 2026-05-12 16:18:07
 
 const CONFIG = {
 
@@ -17,7 +17,7 @@ const CONFIG = {
 
   // ── About section ───────────────────────────────────────
   about: {
-    photo: "/uploads/2ca272ea_JRG9384-Edit-3-scaled.jpg",
+    photo: "https://raw.githubusercontent.com/JuanRozoG/portfolio/main/images/about-photo.jpg",
     bio: `Juan Rozo is a photographer and art-director based in Melbourne.
 
 His work spans people, brands, and personal projects — always with a focus on
@@ -26,7 +26,7 @@ authentic connection, bold light, and cinematic storytelling.
 Available for freelance hire.`,
   },
 
-  logoUrl: "https://juanrozo.com/wp-content/uploads/2024/05/Artboard-2.png",
+  logoUrl: "/images/logo.svg",
 
   // ── Client logos ────────────────────────────────────────
   clientLogos: [
@@ -45,16 +45,19 @@ Available for freelance hire.`,
   ],
 
   // ── Section visibility ──────────────────────────────────
-  sections: {"intro": {"collage": true, "name": true}, "people": {"carousel": true}, "things": {"grid": true}, "personal-v2": {"carousel": true, "counter": true}, "info": {"photo": true, "bio": true, "social": true, "clients": true}, "archive": {"grid": true}, "archive-intro-v1": {}, "archive-personal-v1": {}, "archive-intro-loader-v1": {}, "archive-filmstrip-v1": {}},
+  sections: {"intro": {"collage": true, "name": true}, "people": {"carousel": true}, "things": {"grid": true}, "personal-v2": {"carousel": true, "counter": true}, "info": {"photo": true, "bio": true, "social": true, "clients": true}, "archive": {"grid": true}, "archive-intro-v1": {}, "archive-personal-v1": {}, "archive-intro-loader-v1": {}, "archive-filmstrip-v1": {}, "elastic-grid-v1": {}},
 
   // ── Page content (template-specific editable text) ──────
-  pageContent: {"intro": {"footerCta1": "Contact", "footerCta2": "Let's talk.", "tagline": "Melbourne based. Photographer & Art-director."}, "info": {"label": "About", "role": "Melbourne based. Photographer & Art-director.", "instagram2Label": "@babyjuanmoretime", "instagram2Url": "https://instagram.com/babyjuanmoretime"}},
+  pageContent: {"intro": {"footerCta1": "Got a project?", "footerCta2": "Let's work together.", "tagline": "Melbourne based. Photographer & Art-director."}, "info": {"label": "About", "role": "Melbourne based. Photographer & Art-director.", "instagram2Label": "@babyjuanmoretime", "instagram2Url": "https://instagram.com/babyjuanmoretime"}},
 
   // ── Page templates (template key per page id) ─────────────────
-  pageTemplates: {"intro": "intro", "people": "carousel", "things": "grid", "personal-v2": "fullscreen-carousel", "info": "info", "archive": "archive", "archive-intro-v1": "archive-standalone", "archive-personal-v1": "archive-standalone", "archive-intro-loader-v1": "archive-standalone", "archive-filmstrip-v1": "filmstrip"},
+  pageTemplates: {"intro": "intro", "people": "carousel", "things": "grid", "personal-v2": "fullscreen-carousel", "info": "info", "archive": "archive", "archive-intro-v1": "archive-standalone", "archive-personal-v1": "archive-standalone", "archive-intro-loader-v1": "archive-standalone", "archive-filmstrip-v1": "filmstrip", "elastic-grid-v1": "elastic-grid"},
 
   // ── Menu pages (backend-driven nav, sorted by menuOrder) ────
   menuPages: [{"id": "intro", "menuLabel": "Home", "template": "intro", "slug": "intro"}, {"id": "people", "menuLabel": "People", "template": "carousel", "slug": "people"}, {"id": "things", "menuLabel": "Things", "template": "grid", "slug": "things"}, {"id": "personal-v2", "menuLabel": "Personal", "template": "fullscreen-carousel", "slug": "personal"}, {"id": "info", "menuLabel": "Info", "template": "info", "slug": "info"}],
+
+  // ── All pages index (every page, regardless of status / inMenu) ────
+  allPages: [{"id": "intro", "title": "Intro", "slug": "intro", "template": "intro", "status": "published"}, {"id": "people", "title": "People", "slug": "people", "template": "carousel", "status": "published"}, {"id": "things", "title": "Things", "slug": "things", "template": "grid", "status": "published"}, {"id": "personal-v2", "title": "Personal", "slug": "personal", "template": "fullscreen-carousel", "status": "published"}, {"id": "info", "title": "Info", "slug": "info", "template": "info", "status": "published"}, {"id": "archive", "title": "Archive", "slug": "archive", "template": "archive", "status": "published"}, {"id": "archive-intro-v1", "title": "Archive — Intro v1", "slug": "archive-intro-v1", "template": "archive-standalone", "status": "published"}, {"id": "archive-personal-v1", "title": "Archive — Personal v1", "slug": "archive-personal-v1", "template": "archive-standalone", "status": "published"}, {"id": "archive-intro-loader-v1", "title": "Archive — Intro Loader v1", "slug": "archive-intro-loader-v1", "template": "archive-standalone", "status": "published"}, {"id": "archive-filmstrip-v1", "title": "Archive — Filmstrip v1", "slug": "archive-filmstrip-v1", "template": "filmstrip", "status": "published"}, {"id": "elastic-grid-v1", "title": "Elastic Grid", "slug": "grid-v2", "template": "elastic-grid", "status": "published"}],
 
   // ── Page galleries (source of truth for all portfolio pages) ──
   pageGalleries: {
@@ -201,6 +204,30 @@ Available for freelance hire.`,
     "archive-intro-loader-v1": [
     ],
     "archive-filmstrip-v1": [
+    ],
+    "elastic-grid-v1": [
+      {"id": "img001", "url": "https://juanrozo.com/wp-content/uploads/2025/01/14E7B706-BBA0-43FA-98CC-2283295DE848_1_105_c.jpeg", "image": "https://juanrozo.com/wp-content/uploads/2025/01/14E7B706-BBA0-43FA-98CC-2283295DE848_1_105_c.jpeg", "alt": "Portrait I", "title": "Portrait I", "caption": "", "subtitle": "", "categories": ["works", "people"]},
+      {"id": "img006", "url": "https://juanrozo.com/wp-content/uploads/2025/01/JRG9384-Edit-3-scaled.jpg", "image": "https://juanrozo.com/wp-content/uploads/2025/01/JRG9384-Edit-3-scaled.jpg", "alt": "Portrait VI", "title": "Portrait VI", "caption": "", "subtitle": "", "categories": ["works", "people"]},
+      {"id": "img020", "url": "https://juanrozo.com/wp-content/uploads/2023/12/JRG5055-1.jpg", "image": "https://juanrozo.com/wp-content/uploads/2023/12/JRG5055-1.jpg", "alt": "Still Life I", "title": "Still Life I", "caption": "", "subtitle": "", "categories": ["works", "things"]},
+      {"id": "img003", "url": "https://juanrozo.com/wp-content/uploads/2023/12/Juan-Rozo-3.jpg", "image": "https://juanrozo.com/wp-content/uploads/2023/12/Juan-Rozo-3.jpg", "alt": "Portrait III", "title": "Portrait III", "caption": "", "subtitle": "", "categories": ["works", "people"]},
+      {"id": "img032", "url": "https://juanrozo.com/wp-content/uploads/2025/04/JR000915_0000_JR002741_0011_JR000915_0010_JR001492-2.jpg", "image": "https://juanrozo.com/wp-content/uploads/2025/04/JR000915_0000_JR002741_0011_JR000915_0010_JR001492-2.jpg", "alt": "Street I", "title": "Street I", "caption": "", "subtitle": "", "categories": ["personal"]},
+      {"id": "img009", "url": "https://juanrozo.com/wp-content/uploads/2025/04/JRG8538-Edit.jpg", "image": "https://juanrozo.com/wp-content/uploads/2025/04/JRG8538-Edit.jpg", "alt": "Portrait IX", "title": "Portrait IX", "caption": "", "subtitle": "", "categories": ["people"]},
+      {"id": "img023", "url": "https://juanrozo.com/wp-content/uploads/2023/12/JRG6138-Edit-1.jpg", "image": "https://juanrozo.com/wp-content/uploads/2023/12/JRG6138-Edit-1.jpg", "alt": "Still Life IV", "title": "Still Life IV", "caption": "", "subtitle": "", "categories": ["things"]},
+      {"id": "img036", "url": "https://juanrozo.com/wp-content/uploads/2025/04/JR000915_0000_JR002741_0020_JR000915_0001_JR002695-1.jpg", "image": "https://juanrozo.com/wp-content/uploads/2025/04/JR000915_0000_JR002741_0020_JR000915_0001_JR002695-1.jpg", "alt": "Street V", "title": "Street V", "caption": "", "subtitle": "", "categories": ["personal"]},
+      {"id": "img011", "url": "https://juanrozo.com/wp-content/uploads/2024/05/TYO9176-Edit-2.jpg", "image": "https://juanrozo.com/wp-content/uploads/2024/05/TYO9176-Edit-2.jpg", "alt": "Portrait XI", "title": "Portrait XI", "caption": "", "subtitle": "", "categories": ["people"]},
+      {"id": "img025", "url": "https://juanrozo.com/wp-content/uploads/2023/12/JRG6162-Edit-2.jpg", "image": "https://juanrozo.com/wp-content/uploads/2023/12/JRG6162-Edit-2.jpg", "alt": "Still Life VI", "title": "Still Life VI", "caption": "", "subtitle": "", "categories": ["things"]},
+      {"id": "img040", "url": "https://juanrozo.com/wp-content/uploads/2025/04/JR000915_0000_JR002741_0016_JR000915_0005_JR002387-1.jpg", "image": "https://juanrozo.com/wp-content/uploads/2025/04/JR000915_0000_JR002741_0016_JR000915_0005_JR002387-1.jpg", "alt": "Street IX", "title": "Street IX", "caption": "", "subtitle": "", "categories": ["personal"]},
+      {"id": "img014", "url": "https://juanrozo.com/wp-content/uploads/2025/04/DSC2282-Edit.jpg", "image": "https://juanrozo.com/wp-content/uploads/2025/04/DSC2282-Edit.jpg", "alt": "Portrait XIV", "title": "Portrait XIV", "caption": "", "subtitle": "", "categories": ["people"]},
+      {"id": "img027", "url": "https://juanrozo.com/wp-content/uploads/2023/12/JRG5129-Edit-2.jpg", "image": "https://juanrozo.com/wp-content/uploads/2023/12/JRG5129-Edit-2.jpg", "alt": "Still Life VIII", "title": "Still Life VIII", "caption": "", "subtitle": "", "categories": ["things"]},
+      {"id": "img044", "url": "https://juanrozo.com/wp-content/uploads/2025/04/JR000915_0000_JR002741_0010_JR000915_0011_JR001224-1.jpg", "image": "https://juanrozo.com/wp-content/uploads/2025/04/JR000915_0000_JR002741_0010_JR000915_0011_JR001224-1.jpg", "alt": "Street XIII", "title": "Street XIII", "caption": "", "subtitle": "", "categories": ["personal"]},
+      {"id": "img016", "url": "https://juanrozo.com/wp-content/uploads/2025/01/19947727-A36A-4F86-A9DF-B92420BA31CC_1_105_c.jpeg", "image": "https://juanrozo.com/wp-content/uploads/2025/01/19947727-A36A-4F86-A9DF-B92420BA31CC_1_105_c.jpeg", "alt": "Portrait XVI", "title": "Portrait XVI", "caption": "", "subtitle": "", "categories": ["people"]},
+      {"id": "img029", "url": "https://juanrozo.com/wp-content/uploads/2023/12/JRG5798-Edit-2.jpg", "image": "https://juanrozo.com/wp-content/uploads/2023/12/JRG5798-Edit-2.jpg", "alt": "Still Life X", "title": "Still Life X", "caption": "", "subtitle": "", "categories": ["things"]},
+      {"id": "img048", "url": "https://juanrozo.com/wp-content/uploads/2025/04/JR000915_0000_JR002741_0003_JR000915_0018_JR001014-1.jpg", "image": "https://juanrozo.com/wp-content/uploads/2025/04/JR000915_0000_JR002741_0003_JR000915_0018_JR001014-1.jpg", "alt": "Street XVII", "title": "Street XVII", "caption": "", "subtitle": "", "categories": ["personal"]},
+      {"id": "img018", "url": "https://juanrozo.com/wp-content/uploads/2025/01/JRG6093-2024-Edit-scaled.jpg", "image": "https://juanrozo.com/wp-content/uploads/2025/01/JRG6093-2024-Edit-scaled.jpg", "alt": "Portrait XVIII", "title": "Portrait XVIII", "caption": "", "subtitle": "", "categories": ["people"]},
+      {"id": "img031", "url": "https://juanrozo.com/wp-content/uploads/2023/12/JRG9700-Edit-2-2.jpg", "image": "https://juanrozo.com/wp-content/uploads/2023/12/JRG9700-Edit-2-2.jpg", "alt": "Still Life XII", "title": "Still Life XII", "caption": "", "subtitle": "", "categories": ["things"]},
+      {"id": "img051", "url": "https://juanrozo.com/wp-content/uploads/2025/04/JR000915_0000_JR002741_0015_JR000915_0006_JR002374-1.jpg", "image": "https://juanrozo.com/wp-content/uploads/2025/04/JR000915_0000_JR002741_0015_JR000915_0006_JR002374-1.jpg", "alt": "Street XX", "title": "Street XX", "caption": "", "subtitle": "", "categories": ["personal"]},
+      {"id": "img004", "url": "https://juanrozo.com/wp-content/uploads/2023/12/Juan-Rozo-13.jpg", "image": "https://juanrozo.com/wp-content/uploads/2023/12/Juan-Rozo-13.jpg", "alt": "Portrait IV", "title": "Portrait IV", "caption": "", "subtitle": "", "categories": ["works", "people"]},
+      {"id": "img008", "url": "https://juanrozo.com/wp-content/uploads/2023/12/Juan-Rozo-10.jpg", "image": "https://juanrozo.com/wp-content/uploads/2023/12/Juan-Rozo-10.jpg", "alt": "Portrait VIII", "title": "Portrait VIII", "caption": "", "subtitle": "", "categories": ["works", "people"]},
     ],
   },
 

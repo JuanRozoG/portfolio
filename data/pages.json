@@ -896,13 +896,73 @@
     "inMenu": false,
     "isHome": false,
     "menuOrder": 99,
-    "gallery": [],
-    "sections": {},
-    "seo": {
-      "pageTitle": "Elastic Grid",
-      "metaDescription": "",
-      "ogImage": "",
-      "indexable": true
-    }
+    "gallery": [
+      {
+        "imageId": "img001"
+      },
+      {
+        "imageId": "img006"
+      },
+      {
+        "imageId": "img020"
+      },
+      {
+        "imageId": "img003"
+      },
+      {
+        "imageId": "img032"
+      },
+      {
+        "imageId": "img009"
+      },
+      {
+        "imageId": "img023"
+      },
+      {
+        "imageId": "img036"
+      },
+      {
+        "imageId": "img011"
+      },
+      {
+        "imageId": "img025"
+      },
+      {
+        "imageId": "img040"
+      },
+      {
+        "imageId": "img014"
+      },
+      {
+        "imageId": "img027"
+      },
+      {
+        "imageId": "img044"
+      },
+      {
+        "imageId": "img016"
+      },
+      {
+        "imageId": "img029"
+      },
+      {
+        "imageId": "img048"
+      },
+      {
+        "imageId": "img018"
+      },
+      {
+        "imageId": "img031"
+      },
+      {
+        "imageId": "img051"
+      },
+      {
+        "imageId": "img004"
+      },
+      {
+        "imageId": "img008"
+      }
+    ]
   }
 ]
