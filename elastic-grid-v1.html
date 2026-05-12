@@ -194,6 +194,86 @@
       }
       .eg-grid { padding-top: 90px; }
     }
+
+    /* ── Click-to-expand transition ──────────────────────────────── */
+    .eg-grid__item { will-change: opacity, transform, clip-path; }
+    .eg-grid__item-img img { transition: opacity 0.2s cubic-bezier(0.2, 0, 0.2, 1); }
+    .eg-grid__item:hover .eg-grid__item-img img { opacity: 0.6; }
+
+    /* Fullscreen panel */
+    .rit-panel {
+      position: fixed;
+      inset: 0;
+      margin: 0;
+      padding: max(80px, env(safe-area-inset-top, 80px)) var(--page-padding) 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4vw;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2000;
+      background: #fff;
+    }
+
+    .rit-panel__img {
+      flex-shrink: 0;
+      height: min(78vh, 65vw);
+      aspect-ratio: 4 / 5;
+      background-size: cover;
+      background-position: center;
+      will-change: clip-path;
+    }
+
+    .rit-panel__content {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .rit-panel__title {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(10,10,10,0.35);
+      margin: 0;
+    }
+
+    .rit-panel__close {
+      background: none;
+      border: 0;
+      padding: 0;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: none;
+      color: var(--red);
+      transition: opacity 0.2s ease;
+    }
+    .rit-panel__close:hover { opacity: 0.5; }
+
+    /* Flying mover copies */
+    .rit-mover {
+      position: fixed;
+      background-size: cover;
+      background-position: 50% 50%;
+      will-change: clip-path, opacity;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .rit-panel {
+        flex-direction: column;
+        padding-top: max(80px, env(safe-area-inset-top, 80px));
+      }
+      .rit-panel__img {
+        height: min(55vh, 80vw);
+      }
+    }
   </style>
 </head>
 <body class="loading">
@@ -211,6 +291,15 @@
 
   <!-- ── Logo top-left ──────────────────────────────────────────── -->
   <a href="/" class="ui-name"><img src="/images/logo.svg" alt="Juan Rozo" style="height:40px;width:auto;display:block;" /></a>
+
+  <!-- ── Image transition panel (fullscreen, outside smooth-wrapper) ── -->
+  <figure class="rit-panel" id="rit-panel">
+    <div class="rit-panel__img" id="rit-panel-img"></div>
+    <figcaption class="rit-panel__content" id="rit-panel-content">
+      <h3 class="rit-panel__title" id="rit-panel-title"></h3>
+      <button type="button" class="rit-panel__close" id="rit-panel-close" aria-label="Close preview">Close</button>
+    </figcaption>
+  </figure>
 
   <!-- ── ScrollSmoother wrapper ─────────────────────────────────── -->
   <div id="smooth-wrapper">
@@ -295,6 +384,8 @@
       effects:         true,
       normalizeScroll: true,
     });
+    // Expose globally so the transition script can pause/resume scroll
+    window._gridSmoother = smoother;
 
     const originalItems = Array.from(grid.querySelectorAll('.eg-grid__item'));
 
@@ -371,6 +462,234 @@
       document.body.classList.remove('loading');
       if (!currentCols) init();
     }, 3000);
+
+  })();
+  </script>
+
+  <!-- ── Click-to-expand transition (adapted from Codrops RepeatingImageTransition) ── -->
+  <script>
+  (() => {
+    'use strict';
+
+    /* ── Animation config ──────────────────────────────────────── */
+    const cfg = {
+      clipPathDirection:        'top-bottom',
+      steps:                    6,
+      stepDuration:             0.35,
+      stepInterval:             0.05,
+      moverPauseBeforeExit:     0.14,
+      rotationRange:            0,
+      wobbleStrength:           0,
+      panelRevealEase:          'sine.inOut',
+      gridItemEase:             'sine',
+      moverEnterEase:           'sine.in',
+      moverExitEase:            'sine',
+      panelRevealDurationFactor: 2,
+      clickedItemDurationFactor: 2,
+      gridItemStaggerFactor:    0.3,
+      pathMotion:               'linear',
+      sineAmplitude:            50,
+      sineFrequency:            Math.PI,
+    };
+    const origCfg = { ...cfg };
+
+    const lerp = (a, b, t) => a + (b - a) * t;
+
+    /* ── DOM refs ──────────────────────────────────────────────── */
+    const panel        = document.getElementById('rit-panel');
+    const panelImg     = document.getElementById('rit-panel-img');
+    const panelContent = document.getElementById('rit-panel-content');
+    const panelTitle   = document.getElementById('rit-panel-title');
+    const panelClose   = document.getElementById('rit-panel-close');
+
+    let isAnimating = false;
+    let isPanelOpen = false;
+    let currentItem = null;
+
+    /* ── Helpers ───────────────────────────────────────────────── */
+    const elCenter = el => {
+      const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    };
+
+    const getClipPaths = dir => {
+      switch (dir) {
+        case 'bottom-top': return { from:'inset(0% 0% 100% 0%)',  reveal:'inset(0% 0% 0% 0%)', hide:'inset(100% 0% 0% 0%)' };
+        case 'left-right': return { from:'inset(0% 100% 0% 0%)',  reveal:'inset(0% 0% 0% 0%)', hide:'inset(0% 0% 0% 100%)' };
+        case 'right-left': return { from:'inset(0% 0% 0% 100%)',  reveal:'inset(0% 0% 0% 0%)', hide:'inset(0% 100% 0% 0%)' };
+        default:           return { from:'inset(100% 0% 0% 0%)',  reveal:'inset(0% 0% 0% 0%)', hide:'inset(0% 0% 100% 0%)' };
+      }
+    };
+
+    /* ── Extract image URL + caption from a grid item ──────────── */
+    const extractData = item => {
+      const img = item.querySelector('.eg-grid__item-img img');
+      const cap = item.querySelector('.eg-grid__item-caption');
+      // Use higher-res URL for fullscreen panel
+      const src    = img ? img.src.replace(/w=\d+/, 'w=1600').replace(/q=\d+/, 'q=90') : '';
+      const imgURL = src ? 'url("' + src + '")' : '';
+      const title  = cap ? cap.textContent.trim() : '';
+      return { imgURL, title };
+    };
+
+    /* ── Motion path between two rects ────────────────────────── */
+    const buildPath = (startR, endR, steps) => {
+      const n  = steps + 2;
+      const sc = { x: startR.left + startR.width  / 2, y: startR.top + startR.height / 2 };
+      const ec = { x: endR.left   + endR.width    / 2, y: endR.top   + endR.height   / 2 };
+      const pts = [];
+      for (let i = 0; i < n; i++) {
+        const t  = i / (n - 1);
+        const w  = lerp(startR.width,  endR.width,  t);
+        const h  = lerp(startR.height, endR.height, t);
+        const cx = lerp(sc.x, ec.x, t);
+        const cy = lerp(sc.y, ec.y, t);
+        const sine = cfg.pathMotion === 'sine' ? Math.sin(t * cfg.sineFrequency) * cfg.sineAmplitude : 0;
+        pts.push({ left: cx - w / 2, top: cy - h / 2 + sine, width: w, height: h });
+      }
+      return pts.slice(1, -1); // trim first and last (source/destination)
+    };
+
+    /* ── Stagger delays based on distance from clicked item ────── */
+    const staggerDelays = (clicked, items) => {
+      const base = elCenter(clicked);
+      const dists = Array.from(items).map(el => {
+        const c = elCenter(el);
+        return Math.hypot(c.x - base.x, c.y - base.y);
+      });
+      const max = Math.max(...dists) || 1;
+      return dists.map(d => (d / max) * cfg.gridItemStaggerFactor);
+    };
+
+    /* ── Animate grid items out ────────────────────────────────── */
+    const gridOut = (items, clicked, delays) => {
+      const cp = getClipPaths(cfg.clipPathDirection);
+      gsap.to(items, {
+        opacity:  0,
+        scale:    (i, el) => el === clicked ? 1 : 0.85,
+        duration: (i, el) => el === clicked ? cfg.stepDuration * cfg.clickedItemDurationFactor : 0.3,
+        ease:     cfg.gridItemEase,
+        clipPath: (i, el) => el === clicked ? cp.from : 'none',
+        delay:    (i) => delays[i],
+      });
+    };
+
+    /* ── Fly movers + reveal panel ─────────────────────────────── */
+    const runTransition = (startEl, endEl, imgURL) => {
+      const path = buildPath(startEl.getBoundingClientRect(), endEl.getBoundingClientRect(), cfg.steps);
+      const cp   = getClipPaths(cfg.clipPathDirection);
+
+      path.forEach((step, idx) => {
+        const mover = document.createElement('div');
+        mover.className = 'rit-mover';
+        gsap.set(mover, {
+          backgroundImage: imgURL,
+          left:     step.left,
+          top:      step.top,
+          width:    step.width,
+          height:   step.height,
+          clipPath: cp.hide,
+          zIndex:   1500 + idx,
+          rotationZ: gsap.utils.random(-cfg.rotationRange, cfg.rotationRange),
+        });
+        document.body.appendChild(mover);
+
+        gsap.timeline({ delay: idx * cfg.stepInterval })
+          .fromTo(mover,
+            { opacity: 0.4, clipPath: cp.hide },
+            { opacity: 1,   clipPath: cp.reveal, duration: cfg.stepDuration, ease: cfg.moverEnterEase })
+          .to(mover,
+            { clipPath: cp.from, duration: cfg.stepDuration, ease: cfg.moverExitEase },
+            '+=' + cfg.moverPauseBeforeExit);
+      });
+
+      // Remove movers after they finish
+      const cleanupDelay = cfg.steps * cfg.stepInterval + cfg.stepDuration * 2 + cfg.moverPauseBeforeExit + 0.1;
+      gsap.delayedCall(cleanupDelay, () => document.querySelectorAll('.rit-mover').forEach(m => m.remove()));
+
+      // Reveal panel
+      gsap.set(panelContent, { opacity: 0 });
+      gsap.set(panel, { opacity: 1, pointerEvents: 'auto' });
+      gsap.timeline({
+        defaults: { duration: cfg.stepDuration * cfg.panelRevealDurationFactor, ease: cfg.panelRevealEase }
+      })
+        .fromTo(endEl,
+          { clipPath: cp.hide },
+          { clipPath: cp.reveal, delay: cfg.steps * cfg.stepInterval })
+        .fromTo(panelContent,
+          { y: 20 },
+          { duration: 0.8, ease: 'expo', opacity: 1, y: 0,
+            delay: cfg.steps * cfg.stepInterval,
+            onComplete: () => { isAnimating = false; isPanelOpen = true; } },
+          '<-=.15');
+    };
+
+    /* ── Handle click on grid item ─────────────────────────────── */
+    const onItemClick = item => {
+      if (isAnimating || isPanelOpen) return;
+      isAnimating  = true;
+      currentItem  = item;
+
+      if (window._gridSmoother) window._gridSmoother.paused(true);
+
+      const { imgURL, title } = extractData(item);
+      panelImg.style.backgroundImage = imgURL;
+      panelTitle.textContent = title;
+
+      const allItems = document.querySelectorAll('.eg-grid__item');
+      const delays   = staggerDelays(item, allItems);
+      gridOut(allItems, item, delays);
+      runTransition(item.querySelector('.eg-grid__item-img'), panelImg, imgURL);
+    };
+
+    /* ── Close panel and restore grid ─────────────────────────── */
+    const resetView = () => {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      const allItems = document.querySelectorAll('.eg-grid__item');
+      const delays   = staggerDelays(currentItem, allItems);
+
+      gsap.timeline({
+        defaults: { duration: cfg.stepDuration, ease: 'expo' },
+        onComplete: () => {
+          isAnimating = false;
+          isPanelOpen = false;
+          if (window._gridSmoother) window._gridSmoother.paused(false);
+        }
+      })
+        .to(panel,    { opacity: 0 })
+        .set(panel,   { pointerEvents: 'none' })
+        .set(panelImg, { clipPath: 'inset(0% 0% 100% 0%)' })
+        .set(allItems, { clipPath: 'none', opacity: 0, scale: 0.85 }, 0)
+        .to(allItems, { opacity: 1, scale: 1, delay: i => delays[i] }, '>');
+
+      Object.assign(cfg, origCfg);
+    };
+
+    /* ── Event listeners ───────────────────────────────────────── */
+    panelClose.addEventListener('click',   () => { if (!isAnimating) resetView(); });
+    document.addEventListener('keydown',   e  => { if (e.key === 'Escape' && isPanelOpen && !isAnimating) resetView(); });
+
+    /* ── Wire click handlers after grid is fully built ─────────── */
+    const wireClicks = () => {
+      document.querySelectorAll('.eg-grid__item').forEach(item => {
+        item.addEventListener('click', () => onItemClick(item));
+      });
+    };
+
+    if (!document.body.classList.contains('loading')) {
+      wireClicks();
+    } else {
+      const obs = new MutationObserver(() => {
+        if (!document.body.classList.contains('loading')) {
+          obs.disconnect();
+          // Wait one tick for init() to finish reorganising items into columns
+          setTimeout(wireClicks, 60);
+        }
+      });
+      obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
 
   })();
   </script>
