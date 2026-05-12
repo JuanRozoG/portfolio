@@ -308,17 +308,9 @@
       advanceTimer = setTimeout(advance, INTERVAL);
     }
 
-    // Wait for the first image to load before starting,
-    // with a 3-second safety fallback
-    const firstImg = slides[0].querySelector('img');
-    if (firstImg.complete && firstImg.naturalWidth > 0) {
-      start();
-    } else {
-      const onLoad = () => start();
-      firstImg.addEventListener('load',  onLoad, { once: true });
-      firstImg.addEventListener('error', onLoad, { once: true });
-      setTimeout(() => { if (!slides[0].classList.contains('active')) start(); }, 2800);
-    }
+    // Start immediately — don't wait for images to load.
+    // Slides fade in as images arrive; avoids blank white screen on slow connections.
+    start();
 
   })();
 
