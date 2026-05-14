@@ -22,11 +22,10 @@
       --font-display: NeueHaasGroteskDisplay, 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
       --fw: 900;
       --red: #ff3232;
-      --page-padding: 5vw;
-      --c-gap: 2vw;
-      --r-gap: 2vw;
-      --column-size: 120px;
-      --column-count: 3;
+      --page-padding: 3vw;
+      --c-gap: 44px;
+      --r-gap: 88px;
+      --column-count: 6;
     }
 
     html {
@@ -92,56 +91,71 @@
       will-change: transform;
     }
 
+    /* ── Grid — 6 equal columns, archive-style spacing ─────────── */
     .eg-grid {
       display: grid;
-      padding: 110px var(--page-padding) 8rem;
+      padding: 72px var(--page-padding) 140px;
       margin: 0 auto;
-      grid-template-columns: repeat(var(--column-count), minmax(var(--column-size), 1fr));
+      grid-template-columns: repeat(var(--column-count), 1fr);
       column-gap: var(--c-gap);
-      row-gap: var(--r-gap);
+      row-gap: 0; /* vertical spacing managed per-column by flex gap */
     }
 
-    @media screen and (min-width: 65em) {
-      :root { --column-count: 5; }
-    }
-
-    @media screen and (min-width: 90em) {
-      :root { --column-count: 7; }
-    }
-
+    /* Each column strip — ScrollSmoother applies lag here */
     .eg-grid__column {
       display: flex;
       flex-direction: column;
       gap: var(--r-gap);
     }
 
+    /* Item — square footprint, matching archive cell */
     .eg-grid__item {
       margin: 0;
       cursor: none;
+      position: relative;
     }
 
+    /* Square container with breathing-room scale (archive: scale 0.9) */
     .eg-grid__item-img {
+      aspect-ratio: 1 / 1;
       overflow: hidden;
       display: block;
       width: 100%;
+      transform: scale(0.9);
+      transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
+    /* Subtle hover lift — same ratio as archive (0.9 × 1.04 = 0.936) */
+    .eg-grid__item:hover .eg-grid__item-img {
+      transform: scale(0.936);
+    }
+
+    /* Image fills the square, fully visible (contain not crop) */
     .eg-grid__item-img img {
       width: 100%;
-      height: auto;
+      height: 100%;
+      object-fit: contain;
       display: block;
       pointer-events: none;
       user-select: none;
       -webkit-user-select: none;
     }
 
-    .eg-grid__item-caption {
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-top: 0.4rem;
-      color: rgba(10,10,10,0.35);
+    /* Responsive column counts + gaps — mirrors archive breakpoints */
+    @media (max-width: 1100px) {
+      :root { --column-count: 5; --c-gap: 36px; --r-gap: 72px; }
+    }
+    @media (max-width: 860px) {
+      :root { --column-count: 4; --c-gap: 24px; --r-gap: 48px; }
+      .eg-grid { padding-top: 70px; padding-bottom: 100px; }
+    }
+    @media (max-width: 600px) {
+      :root { --column-count: 3; --c-gap: 16px; --r-gap: 32px; }
+      .eg-grid { padding-top: 64px; padding-bottom: 80px; }
+    }
+    @media (max-width: 380px) {
+      :root { --column-count: 2; --c-gap: 12px; --r-gap: 24px; }
+      .eg-grid { padding-top: 60px; padding-bottom: 60px; }
     }
 
     /* ── Chrome UI ──────────────────────────────────────────────── */
@@ -181,20 +195,10 @@
       color: rgba(10,10,10,.3);
     }
 
-    /* Mobile: tighter gaps */
-    @media (max-width: 600px) {
-      :root {
-        --c-gap: 3vw;
-        --r-gap: 3vw;
-        --page-padding: 3vw;
-      }
-      .eg-grid { padding-top: 90px; }
-    }
-
     /* ── Click-to-expand transition ──────────────────────────────── */
     .eg-grid__item { will-change: opacity, transform, clip-path; }
-    .eg-grid__item-img img { transition: opacity 0.2s cubic-bezier(0.2, 0, 0.2, 1); }
-    .eg-grid__item:hover .eg-grid__item-img img { opacity: 0.6; }
+    /* Hover: image fades slightly (archive style — opacity on the item itself) */
+    .eg-grid__item:hover .eg-grid__item-img img { opacity: 0.88; }
 
     /* Fullscreen panel */
     .rit-panel {
