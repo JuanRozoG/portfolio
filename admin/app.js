@@ -724,6 +724,27 @@ async function renderPageEditor(pageId) {
         </div>
       </div>
     `;
+  } else if (page.template === 'filmstrip') {
+    contentPanelHtml = `
+      <div class="panel">
+        <div class="panel-header">Filmstrip Settings</div>
+        <div class="panel-body">
+          <div class="form-grid cols-1">
+            <div class="field-group">
+              <label class="field-label">Seconds per image</label>
+              <input class="field-input" id="pc-slide-interval" type="number"
+                min="0.5" max="60" step="0.5"
+                value="${esc(String(_c.slideInterval || 2))}"
+                style="max-width:120px" />
+              <span class="field-hint">
+                Tiempo que se muestra cada foto antes del cross-dissolve. Default: 2 s.
+                El gallery de fotos se gestiona en la sección Gallery de esta página.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   setView(`
@@ -969,6 +990,10 @@ async function renderPageEditor(pageId) {
           role:            document.getElementById('pc-role')?.value.trim()      || '',
           instagram2Label: document.getElementById('pc-ig2-label')?.value.trim() || '',
           instagram2Url:   document.getElementById('pc-ig2-url')?.value.trim()   || '',
+        };
+      } else if (page.template === 'filmstrip') {
+        contentData = {
+          slideInterval: parseFloat(document.getElementById('pc-slide-interval')?.value) || 2,
         };
       }
 

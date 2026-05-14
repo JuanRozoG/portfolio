@@ -181,13 +181,16 @@
   (() => {
     'use strict';
 
-    /* ── Timing constants ──────────────────────────────────────── */
-    const HOLD       = 2000;   // ms each image stays at full opacity
-    const FADE       =  700;   // ms for cross-dissolve (must match CSS transition)
-    const INTERVAL   = HOLD;   // ms between advances (crossfade overlaps with next hold)
-    const IMG_COUNT  = 15;     // total images in pool (5 per section)
+    /* ── Page identity + admin-configurable timing ─────────────── */
+    const PAGE_ID  = 'archive-filmstrip-v1';
+    const _c       = (CONFIG.pageContent || {})[PAGE_ID] || {};
+    // slideInterval stored in seconds in admin; default 2s
+    const HOLD     = Math.round((_c.slideInterval || 2) * 1000);
+    const FADE     = 700;    // ms for cross-dissolve (must match CSS transition)
+    const INTERVAL = HOLD;   // ms between advances
+    const IMG_COUNT = 15;    // max images when using fallback balanced pool
 
-    /* ── Build balanced image pool ─────────────────────────────── */
+    /* ── Build image pool ──────────────────────────────────────── */
     function shuffle(arr) {
       const a = [...arr];
       for (let i = a.length - 1; i > 0; i--) {
@@ -197,27 +200,27 @@
       return a;
     }
 
-    function pick(arr, n) {
-      return shuffle(arr).slice(0, n);
-    }
-
     const galleries = CONFIG.pageGalleries || {};
-    const people    = galleries.people      || [];
-    const things    = galleries.things      || [];
-    const personal  = galleries['personal-v2'] || galleries.personal || [];
 
-    // 5 from each section, then shuffle the combined pool
-    const perSection = Math.ceil(IMG_COUNT / 3);
-    let pool = shuffle([
-      ...pick(people,   perSection),
-      ...pick(things,   perSection),
-      ...pick(personal, perSection),
-    ]).slice(0, IMG_COUNT);
+    // Primary: use this page's own gallery managed in admin
+    let pool = shuffle(galleries[PAGE_ID] || []);
 
-    // If any section was empty, top up from all available images
-    if (pool.length < 4) {
-      const allImgs = Object.values(galleries).flat();
-      pool = shuffle(allImgs).slice(0, IMG_COUNT);
+    // Fallback: balanced mix from people / things / personal
+    if (!pool.length) {
+      const pick = (arr, n) => shuffle(arr).slice(0, n);
+      const people   = galleries.people    || [];
+      const things   = galleries.things    || [];
+      const personal = galleries['personal-v2'] || galleries.personal || [];
+      const perSec   = Math.ceil(IMG_COUNT / 3);
+      pool = shuffle([
+        ...pick(people,   perSec),
+        ...pick(things,   perSec),
+        ...pick(personal, perSec),
+      ]).slice(0, IMG_COUNT);
+      // Last resort: any available images
+      if (!pool.length) {
+        pool = shuffle(Object.values(galleries).flat()).slice(0, IMG_COUNT);
+      }
     }
 
     if (!pool.length) {
