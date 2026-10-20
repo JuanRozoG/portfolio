@@ -170,12 +170,25 @@
     const allThings   = introPool.filter(p => (p.categories || []).includes('things'));
     const allPersonal = introPool.filter(p => (p.categories || []).includes('personal'));
 
-    // Pick 3 random from each category for balanced distribution
-    const collageImages = [
-      ...pickRandom(allPeople, 3),
-      ...pickRandom(allThings, 3),
-      ...pickRandom(allPersonal, 3),
+    // Pick 3 random from each category for balanced distribution.
+    // If a category is empty, fill remaining slots from the full pool to always reach 9.
+    const _picked = new Set();
+    function pickUnique(arr, n) {
+      const available = arr.filter(p => !_picked.has(p.id));
+      const chosen = pickRandom(available, n);
+      chosen.forEach(p => _picked.add(p.id));
+      return chosen;
+    }
+    let collageImages = [
+      ...pickUnique(allPeople, 3),
+      ...pickUnique(allThings, 3),
+      ...pickUnique(allPersonal, 3),
     ];
+    // Fill any remaining slots (caused by empty categories) from the rest of the pool
+    if (collageImages.length < 9) {
+      const remaining = introPool.filter(p => !_picked.has(p.id));
+      collageImages = collageImages.concat(pickRandom(remaining, 9 - collageImages.length));
+    }
 
     // Shuffle the combined set
     for (let i = collageImages.length - 1; i > 0; i--) {
@@ -651,7 +664,7 @@
       // If the target is a standalone page (external HTML), do wipe then navigate.
       const _allPagesNav = (typeof CONFIG !== 'undefined' && CONFIG.allPages) || [];
       const _targetMeta  = _allPagesNav.find(p => p.id === targetPage);
-      if (_targetMeta && ['archive-standalone', 'filmstrip'].includes(_targetMeta.template)) {
+      if (_targetMeta && ['archive-standalone', 'filmstrip', 'elastic-grid'].includes(_targetMeta.template)) {
         isTransitioning = true;
         closeMenu();
         const _wipeEl = document.createElement('div');
@@ -2375,7 +2388,7 @@
         // If home is a standalone page, redirect to its URL (server normally handles this,
         // but fallback here covers local dev or edge cases).
         const _homeMeta = _allPages.find(p => p.id === currentPage);
-        if (_homeMeta && ['archive-standalone', 'filmstrip'].includes(_homeMeta.template)) {
+        if (_homeMeta && ['archive-standalone', 'filmstrip', 'elastic-grid'].includes(_homeMeta.template)) {
           window.location.replace('/' + (_homeMeta.slug || currentPage));
         } else {
           showPage(currentPage);

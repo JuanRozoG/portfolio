@@ -490,7 +490,6 @@ def patch_html_navigation(nav_data: dict):
 # ══════════════════════════════════════════════════════════════════════════════
 
 @app.route("/api/ping", methods=["GET"])
-@require_auth
 def api_ping():
     return jsonify({
         "ok":    True,
@@ -889,7 +888,7 @@ def serve_config_js():
     try:
         content = _build_config_content()
         return Response(content, mimetype="application/javascript",
-                        headers={"Cache-Control": "no-store"})
+                        headers={"Cache-Control": "public, max-age=60"})
     except Exception as e:
         log.error("serve_config_js failed — %s", e)
         return Response(
@@ -992,6 +991,10 @@ def _migrate_about_photo():
     """
     try:
         site = read_json("site.json") or {}
+        # Fast exit: skip DB read if photo is already permanent
+        photo_check = site.get("about", {}).get("photo", "")
+        if not photo_check.startswith("/uploads/"):
+            return
         photo = site.get("about", {}).get("photo", "")
         if photo.startswith("/uploads/"):
             # Find a replacement in the /images/ directory
