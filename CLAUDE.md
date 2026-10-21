@@ -42,7 +42,7 @@ vercel.json       — Configuración de routing Vercel
 ### Cache busting de CSS
 El link de style.css en `index.html` usa versión: `<link rel="stylesheet" href="style.css?v=N" />`
 **Incrementar `v=N` cada vez que se modifique style.css** para forzar recarga en browsers.
-Versión actual: **v=8**
+Versión actual: **v=16**
 
 ### Páginas de archivo (archive-*.html)
 Estas páginas NO importan `style.css`. Tienen su propio bloque `<style>` inline.

@@ -4,8 +4,6 @@
    Font: NeueHaasGroteskDisplay Black (900)
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@900&display=swap');
-
 @font-face {
   font-family: NeueHaasGroteskDisplay;
   src: url('/fonts/NeueHaasGroteskDisplay-Black.woff2') format('woff2');
@@ -66,9 +64,15 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
-  cursor: none;
   overflow-x: clip;
   transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Custom cursor only on devices that actually support hover (not touch-only) */
+@media (hover: hover) {
+  body   { cursor: none; }
+  a      { cursor: none; }
+  button { cursor: none; }
 }
 
 /* Info page — same light theme as the rest */
@@ -80,11 +84,9 @@ body.page-info {
 a {
   color: inherit;
   text-decoration: none;
-  cursor: none;
 }
 .about-bio a { text-decoration: underline 1px; }
 img { display: block; max-width: 100%; }
-button { cursor: none; }
 
 /* ══════════════════════════════════════════════════════════════
    CUSTOM CURSOR
