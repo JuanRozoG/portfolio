@@ -1080,7 +1080,8 @@ def serve_images(filename):
 
 @app.route("/assets/<path:filename>")
 def serve_assets(filename):
-    r = send_from_directory(str(BASE_DIR / "assets"), filename)
+    r = send_from_directory(str(BASE_DIR / "assets"), filename,
+                            mimetype="font/woff2" if filename.endswith(".woff2") else None)
     # Long cache: URLs carry ?v=<content hash> (see _asset_version)
     r.headers["Cache-Control"] = "public, max-age=31536000, immutable" if request.args.get("v") else "no-cache"
     return r
@@ -1101,6 +1102,58 @@ def _abs_url(url: str) -> str:
         return url
     base = SITE_URL or request.host_url.rstrip("/")
     return base + "/" + url.lstrip("/")
+
+# ── LCP preload — mirrors Core.img()/Core.srcset() in assets/core.js ─────────
+# The first photo of a gallery is created by JavaScript, so the browser would
+# only discover it after the page script runs. Preloading it here with the
+# exact same URLs lets the download start with the HTML.
+IMG_WIDTHS = (128, 256, 640, 1080, 1600, 2048)   # = vercel.json images.sizes
+LCP_SIZES  = {   # template → (src width, sizes) — must match the page renderers
+    "carousel":            (1080, "(max-width: 600px) 90vw, 50vw"),
+    "grid":                (640,  "(max-width: 600px) calc(100vw - 32px), (max-width: 768px) 46vw, 28vw"),
+    "fullscreen-carousel": (1080, "(max-width: 600px) 75vw, 50vw"),
+    "info":                (1080, "(max-width: 600px) 100vw, 45vw"),
+}
+
+def _snap_width(w: int) -> int:
+    return next((s for s in IMG_WIDTHS if s >= w), IMG_WIDTHS[-1])
+
+def img_url(url: str, w: int, q: int = 75) -> str:
+    from urllib.parse import quote, urlparse
+    w = _snap_width(w)
+    if url.startswith("/images/"):
+        return url.split("?")[0] + f"?w={w}"
+    if IMAGE_OPTIMIZER != "vercel" or urlparse(url).hostname != "juanrozo.com":
+        return url
+    encoded = quote(url, safe="-_.!~*'()")   # = encodeURIComponent
+    return f"/_vercel/image?url={encoded}&w={w}&q={q}"
+
+def img_srcset(url: str, max_w=None, q: int = 75) -> str:
+    if IMAGE_OPTIMIZER != "vercel" and not url.startswith("/images/"):
+        return ""
+    widths = [w for w in IMG_WIDTHS if w >= 256 and (not max_w or w <= _snap_width(max_w))]
+    return ", ".join(f"{img_url(url, w, q)} {w}w" for w in widths)
+
+def _lcp_preload(page: dict, site: dict) -> str:
+    spec = LCP_SIZES.get(page.get("template", ""))
+    if not spec:
+        return ""
+    if page.get("template") == "info":
+        url = site.get("about", {}).get("photo", "")
+        dims = probe_image_dims(url) if url.startswith("/images/") else None
+        max_w = dims[0] if dims else None
+    else:
+        images = {img["id"]: img for img in (read_json("images.json") or [])}
+        first = next((images[r["imageId"]] for r in page.get("gallery", []) if r.get("imageId") in images), None)
+        if not first:
+            return ""
+        url, max_w = first.get("url", ""), first.get("width")
+    if not url:
+        return ""
+    e = lambda s: html.escape(str(s), quote=True)
+    srcset = img_srcset(url, max_w)
+    extra = f' imagesrcset="{e(srcset)}" imagesizes="{e(spec[1])}"' if srcset else ""
+    return f'<link rel="preload" as="image" href="{e(img_url(url, spec[0]))}"{extra} fetchpriority="high" />'
 
 def _head_html(page) -> str:
     """Common <head> block: title, description, canonical, Open Graph, robots,
@@ -1138,10 +1191,11 @@ def _head_html(page) -> str:
         f'<meta name="jr:page" content="{e(page.get("id"))}" />' if page.get("id") else "",
         '<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32.png" />',
         '<link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />',
-        '<link rel="preconnect" href="https://fonts.googleapis.com" />',
-        '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
-        '<link rel="preconnect" href="https://juanrozo.com" />',
-        '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;900&display=swap" />',
+        # Self-hosted font (see @font-face in core.css) — same ?v as there
+        '<link rel="preload" href="/assets/fonts/HankenGrotesk-latin.woff2?v=1" as="font" type="font/woff2" crossorigin />',
+        # Photos come through /_vercel/image (same origin); preconnect only without it
+        '<link rel="preconnect" href="https://juanrozo.com" />' if IMAGE_OPTIMIZER != "vercel" else "",
+        _lcp_preload(page, site) if page.get("id") else "",
         f'<link rel="stylesheet" href="/assets/core.css?v={_asset_version("core.css")}" />',
         f'<script src="/assets/core.js?v={_asset_version("core.js")}"></script>',
     ]
