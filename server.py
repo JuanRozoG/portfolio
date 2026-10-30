@@ -1074,8 +1074,14 @@ def serve_images(filename):
                             if (images_dir / f"{stem}-{s}.{ext}").is_file()), None)
             if biggest and w > biggest:
                 filename = f"{stem}-{biggest}.{ext}"
+        # Same variant as WebP when the browser accepts it and the file exists
+        webp = filename.rpartition(".")[0] + ".webp"
+        if "image/webp" in request.headers.get("Accept", "") and (images_dir / webp).is_file():
+            filename = webp
     r = send_from_directory(str(images_dir), filename)
     r.headers["Cache-Control"] = "public, max-age=604800"
+    if w:
+        r.headers["Vary"] = "Accept"
     return r
 
 @app.route("/assets/<path:filename>")
@@ -1230,7 +1236,10 @@ def serve_static(filename):
     if path.is_file():
         if path.suffix == '.html' and path.parent == BASE_DIR.resolve():
             return serve_html(path)
-        return send_from_directory(str(BASE_DIR), filename)
+        r = send_from_directory(str(BASE_DIR), filename)
+        if request.args.get("v") and path.suffix in (".css", ".js"):
+            r.headers["Cache-Control"] = "public, max-age=31536000, immutable"   # e.g. /style.css?v=N
+        return r
     # ── Slug-based routing ──────────────────────────────────────
     # Allows clean URLs like /people, /personal-work, /archive-v1
     # regardless of whether the slug matches the internal page id.

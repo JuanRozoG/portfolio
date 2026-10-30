@@ -43,7 +43,7 @@ vercel.json       — Routing Vercel, redirecciones 301 y Vercel Image Optimizat
 ### Cache busting de CSS
 El link de style.css en `index.html` usa versión: `<link rel="stylesheet" href="style.css?v=N" />`
 **Incrementar `v=N` cada vez que se modifique style.css** para forzar recarga en browsers.
-Versión actual: **v=17**. `/assets/*` se versiona solo (hash de contenido).
+Versión actual: **v=18**. `/assets/*` se versiona solo (hash de contenido).
 
 ### Páginas de archivo (archive-*.html)
 Viven en `/lab/<nombre>` (noindex, fuera del menú). Cargan core.css/core.js vía `<!--core:head-->`;
