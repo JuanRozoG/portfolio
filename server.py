@@ -11,11 +11,15 @@ Debug:      set DEBUG=1 for verbose logging
 """
 
 import copy
+import hashlib
+import html
 import json
 import logging
 import os
 import re
+import struct
 import traceback
+import urllib.request
 import uuid
 from datetime import datetime
 from functools import wraps
@@ -46,6 +50,15 @@ CORE_PAGES         = {
     "archive-intro-v1", "archive-personal-v1", "archive-intro-loader-v1", "archive-filmstrip-v1",
     "elastic-grid-v1",
 }
+STANDALONE_TEMPLATES = ("archive-standalone", "filmstrip", "elastic-grid")
+LAB_TEMPLATES        = STANDALONE_TEMPLATES + ("archive",)
+LAB_PREFIX           = "lab/"
+LAB_ALIASES          = {"filmstrip": "archive-filmstrip-v1", "grid": "archive", "grid-v2": "elastic-grid-v1"}
+# Public origin used for canonical / og:url. Falls back to the request host.
+SITE_URL           = os.environ.get("SITE_URL", "").rstrip("/")
+# "vercel" → front-end requests images through /_vercel/image (Vercel Image Optimization).
+IMAGE_OPTIMIZER    = os.environ.get("IMAGE_OPTIMIZER", "vercel" if os.environ.get("VERCEL") else "")
+LOCAL_IMAGE_WIDTHS = (640, 1080, 1600)   # pre-generated variants: images/<name>-<w>.<ext>
 
 # ── Logging ────────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -211,6 +224,90 @@ def write_json(filename: str, data):
             raise
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  Image dimensions — read from the file header (first 256 KB), no imaging deps
+# ══════════════════════════════════════════════════════════════════════════════
+def _dims_from_bytes(d: bytes):
+    """Return (width, height) for JPEG/PNG/WebP header bytes, or None."""
+    if d[:8] == b"\x89PNG\r\n\x1a\n":
+        return struct.unpack(">II", d[16:24])
+    if d[:4] == b"RIFF" and d[8:12] == b"WEBP":
+        chunk = d[12:16]
+        if chunk == b"VP8X":
+            return (int.from_bytes(d[24:27], "little") + 1, int.from_bytes(d[27:30], "little") + 1)
+        if chunk == b"VP8 ":
+            w, h = struct.unpack("<HH", d[26:30])
+            return (w & 0x3FFF, h & 0x3FFF)
+        if chunk == b"VP8L":
+            b = int.from_bytes(d[21:25], "little")
+            return ((b & 0x3FFF) + 1, ((b >> 14) & 0x3FFF) + 1)
+        return None
+    i = 2
+    while i < len(d) - 9:
+        if d[i] != 0xFF:
+            i += 1
+            continue
+        m = d[i + 1]
+        if m in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+            h, w = struct.unpack(">HH", d[i + 5:i + 9])
+            return (w, h)
+        if m in (0xD8, 0x01) or 0xD0 <= m <= 0xD7:
+            i += 2
+            continue
+        i += 2 + struct.unpack(">H", d[i + 2:i + 4])[0]
+    return None
+
+def probe_image_dims(url: str):
+    """Best-effort (width, height) for a library URL. Returns None on any failure."""
+    try:
+        if url.startswith("/images/"):
+            path = BASE_DIR / url.lstrip("/").split("?")[0]
+            return _dims_from_bytes(path.read_bytes()[:262144]) if path.is_file() else None
+        if not url.startswith("http"):
+            return None
+        import ssl
+        try:
+            import certifi
+            ctx = ssl.create_default_context(cafile=certifi.where())
+        except ImportError:
+            ctx = ssl.create_default_context()
+        req = urllib.request.Request(url, headers={"Range": "bytes=0-262143", "User-Agent": "portfolio-cms"})
+        with urllib.request.urlopen(req, timeout=8, context=ctx) as r:
+            return _dims_from_bytes(r.read(262144))
+    except Exception as e:
+        log.warning("probe_image_dims(%s) failed — %s", url, e)
+        return None
+
+def _with_dims(img: dict) -> dict:
+    """Fill width/height on a library record when missing or when the URL changed."""
+    if img.get("width") and img.get("height"):
+        return img
+    dims = probe_image_dims(img.get("url", ""))
+    if dims:
+        img["width"], img["height"] = int(dims[0]), int(dims[1])
+    return img
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Page metadata (title, description, og, canonical) — shared by config.js
+#  and the <head> injected into every HTML page
+# ══════════════════════════════════════════════════════════════════════════════
+def is_lab_page(page: dict) -> bool:
+    return str(page.get("slug", "")).startswith(LAB_PREFIX) or page.get("template") in LAB_TEMPLATES
+
+def page_title(page: dict, site: dict) -> str:
+    name  = site.get("name") or "Juan Rozo"
+    seo   = page.get("seo") or {}
+    title = (seo.get("pageTitle") or "").strip()
+    if page.get("isHome") and (not title or title == name):
+        return f"{name} — {site.get('tagline') or 'Photographer'}, Melbourne"
+    if title:
+        return title
+    label = page.get("menuLabel") or page.get("title") or page.get("id", "")
+    return f"{label} — {name}"
+
+def page_path(page: dict) -> str:
+    return "/" if page.get("isHome") else "/" + str(page.get("slug") or page.get("id", "")).strip("/")
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  config.js builder
 # ══════════════════════════════════════════════════════════════════════════════
 def _safe_menu_item(p):
@@ -261,7 +358,7 @@ def _build_config_content() -> str:
                 alt     = ref.get("alt") or img.get("alt", "")
                 caption = ref.get("caption") or img.get("caption", "")
                 cats    = img.get("categories", [])
-                resolved.append({
+                item = {
                     "id":         img["id"],
                     "url":        url,
                     "image":      url,
@@ -270,12 +367,24 @@ def _build_config_content() -> str:
                     "caption":    caption,
                     "subtitle":   caption,
                     "categories": cats,
-                })
+                }
+                # Optional fields: real pixel size (layout reservation) and
+                # commercial credits (brand + role), editable in the admin library.
+                if img.get("width") and img.get("height"):
+                    item["width"], item["height"] = int(img["width"]), int(img["height"])
+                for key in ("client", "role"):
+                    val = ref.get(key) or img.get(key)
+                    if val:
+                        item[key] = val
+                resolved.append(item)
             page_galleries[pid] = resolved
         except Exception as e:
             log.warning("config: skipping gallery for '%s' — %s", pid, e)
             page_galleries[pid] = []
 
+    about_photo = site.get("about", {}).get("photo", "")
+    # Local portrait: size read from disk (cheap); remote URLs are left to the browser
+    about_dims  = probe_image_dims(about_photo) if about_photo.startswith("/images/") else None
     bio = site.get("about", {}).get("bio", "").replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
 
     lines = [
@@ -285,6 +394,7 @@ def _build_config_content() -> str:
         "const CONFIG = {",
         "",
         f"  homePage: {json.dumps(home_page_id)},",
+        f"  imageOptimizer: {json.dumps(IMAGE_OPTIMIZER)},",
         "",
         "  // ── Personal info ───────────────────────────────────────",
         f"  name:          {json.dumps(site.get('name', ''))},",
@@ -298,7 +408,9 @@ def _build_config_content() -> str:
         "",
         "  // ── About section ───────────────────────────────────────",
         "  about: {",
-        f"    photo: {json.dumps(site.get('about', {}).get('photo', ''))},",
+        f"    photo: {json.dumps(about_photo)},",
+        f"    width: {json.dumps(about_dims[0] if about_dims else None)},",
+        f"    height: {json.dumps(about_dims[1] if about_dims else None)},",
         f"    bio: `{bio}`,",
         "  },",
         "",
@@ -345,11 +457,12 @@ def _build_config_content() -> str:
         "  allPages: " + json.dumps(
             [
                 {
-                    "id":       p["id"],
-                    "title":    p.get("title", p["id"]),
-                    "slug":     p.get("slug", p["id"]),
-                    "template": p.get("template", ""),
-                    "status":   p.get("status", "draft"),
+                    "id":        p["id"],
+                    "title":     p.get("title", p["id"]),
+                    "slug":      p.get("slug", p["id"]),
+                    "template":  p.get("template", ""),
+                    "status":    p.get("status", "draft"),
+                    "pageTitle": page_title(p, site),
                 }
                 for p in pages if p.get("id")
             ],
@@ -755,14 +868,16 @@ def api_library_add():
     if not data.get("url"):
         return jsonify({"error": "url is required"}), 400
     images  = read_json("images.json") or []
-    new_img = {
+    new_img = _with_dims({
         "id":         _next_image_id(),
         "url":        data["url"],
         "alt":        data.get("alt", ""),
         "caption":    data.get("caption", ""),
+        "client":     data.get("client", ""),
+        "role":       data.get("role", ""),
         "categories": data.get("categories", []),
         "addedAt":    datetime.now().isoformat(),
-    }
+    })
     images.append(new_img)
     write_json("images.json", images)
     log.info("Library: image added — id=%s", new_img["id"])
@@ -777,10 +892,14 @@ def api_library_update(img_id):
         if img["id"] == img_id:
             img["alt"]        = data.get("alt",        img.get("alt", ""))
             img["caption"]    = data.get("caption",    img.get("caption", ""))
+            img["client"]     = data.get("client",     img.get("client", ""))
+            img["role"]       = data.get("role",       img.get("role", ""))
             img["categories"] = data.get("categories", img.get("categories", []))
-            if data.get("url"):
+            if data.get("url") and data["url"] != img.get("url"):
                 img["url"] = data["url"]
-            images[i] = img
+                img.pop("width", None)
+                img.pop("height", None)
+            images[i] = _with_dims(img)
             write_json("images.json", images)
             regenerate_config_js()
             return jsonify(img)
@@ -843,6 +962,9 @@ def api_upload():
             "filename":   name,
             "addedAt":    datetime.now().isoformat(),
         }
+        dims = _dims_from_bytes(path.read_bytes()[:262144])
+        if dims:
+            new_img["width"], new_img["height"] = int(dims[0]), int(dims[1])
         images.append(new_img)
         write_json("images.json", images)
         log.info("Upload: %s → %s (%.1f KB)", file.filename, name, size / 1024)
@@ -872,11 +994,37 @@ def api_delete_upload(filename):
 def serve_index():
     pages = read_json("pages.json") or []
     home  = next((p for p in pages if p.get("isHome")), None)
-    if home and home.get("template") in ("archive-standalone", "filmstrip", "elastic-grid"):
+    if home and home.get("template") in STANDALONE_TEMPLATES:
         html_path = BASE_DIR / f"{home['id']}.html"
         if html_path.is_file():
-            return serve_html(html_path)
-    return serve_html(BASE_DIR / "index.html")
+            return serve_html(html_path, home)
+    return serve_html(BASE_DIR / "index.html", home)
+
+@app.route("/lab")
+@app.route("/lab/")
+def serve_lab_index():
+    """Plain index of archived experiments (noindex, outside the main menu)."""
+    pages = [p for p in (read_json("pages.json") or []) if is_lab_page(p) and p.get("status") == "published"]
+    items = "".join(
+        f'<li><a href="{html.escape(page_path(p))}">{html.escape(p.get("title") or p["id"])}</a></li>'
+        for p in sorted(pages, key=lambda p: p.get("menuOrder", 999))
+    )
+    content = (
+        '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" />'
+        '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />'
+        "<!--core:head--><style>"
+        "body{margin:0;font-family:var(--font-display);font-weight:900;background:#fff;color:#0a0a0a}"
+        "main{padding:calc(var(--header-h) + 48px) var(--gutter) 64px}"
+        "h1{font-size:clamp(40px,8vw,88px);letter-spacing:-.04em;line-height:.9;margin:0 0 32px}"
+        "ul{list-style:none;margin:0;padding:0;font-size:clamp(22px,3vw,32px);letter-spacing:-.03em}"
+        "li a{display:inline-flex;min-height:44px;align-items:center;color:inherit;text-decoration:none}"
+        "@media (hover:hover){li a:hover{color:var(--color-red)}}"
+        "</style></head><body><main id=\"main\"><h1>Lab</h1>"
+        f"<ul>{items}</ul></main><script src=\"/config.js\"></script></body></html>"
+    )
+    meta = {"id": "lab", "title": "Lab", "slug": "lab", "template": "archive",
+            "seo": {"pageTitle": "Lab — Juan Rozo", "indexable": False}}
+    return _html_response(_inject_head(content, meta))
 
 @app.route("/config.js")
 def serve_config_js():
@@ -911,37 +1059,108 @@ def serve_upload(filename):
 
 @app.route("/images/<path:filename>")
 def serve_images(filename):
-    return send_from_directory(str(BASE_DIR / "images"), filename)
-
-@app.route("/shared.css")
-def serve_shared_css():
-    r = send_from_directory(str(BASE_DIR), "shared.css")
-    r.headers["Cache-Control"] = "no-cache"
+    """Local images. ?w=<n> serves the closest pre-generated variant
+    (images/<name>-<w>.<ext>) when one exists, else the original."""
+    images_dir = BASE_DIR / "images"
+    w = request.args.get("w", type=int)
+    if w:
+        stem, dot, ext = filename.rpartition(".")
+        for size in sorted(LOCAL_IMAGE_WIDTHS):
+            if size >= w and (images_dir / f"{stem}-{size}.{ext}").is_file():
+                filename = f"{stem}-{size}.{ext}"
+                break
+        else:
+            biggest = next((s for s in sorted(LOCAL_IMAGE_WIDTHS, reverse=True)
+                            if (images_dir / f"{stem}-{s}.{ext}").is_file()), None)
+            if biggest and w > biggest:
+                filename = f"{stem}-{biggest}.{ext}"
+    r = send_from_directory(str(images_dir), filename)
+    r.headers["Cache-Control"] = "public, max-age=604800"
     return r
 
-@app.route("/shared.js")
-def serve_shared_js():
-    r = send_from_directory(str(BASE_DIR), "shared.js")
-    r.headers["Cache-Control"] = "no-cache"
+@app.route("/assets/<path:filename>")
+def serve_assets(filename):
+    r = send_from_directory(str(BASE_DIR / "assets"), filename)
+    # Long cache: URLs carry ?v=<content hash> (see _asset_version)
+    r.headers["Cache-Control"] = "public, max-age=31536000, immutable" if request.args.get("v") else "no-cache"
     return r
 
-def serve_html(html_path):
-    """Read an HTML file, inject shared.css + shared.js if the page has no cursor,
-    and return a no-cache Response. Works reliably on Vercel (no streaming issues)."""
-    content = Path(html_path).read_text(encoding="utf-8")
-    if "/shared.css" not in content and 'id="cursor"' not in content:
-        content = content.replace(
-            "</head>",
-            '<link rel="stylesheet" href="/shared.css">\n</head>',
-            1,
-        )
-        content = content.replace(
-            "</body>",
-            '<script defer src="/shared.js"></script>\n</body>',
-            1,
-        )
-    return Response(content, mimetype="text/html",
-                    headers={"Cache-Control": "no-cache"})
+_ASSET_VERSIONS = {}
+
+def _asset_version(name: str) -> str:
+    """Short content hash for cache-busting /assets/* URLs.
+    Memoised on Vercel (files are immutable per deployment); recomputed locally."""
+    if MONGO_URI and name in _ASSET_VERSIONS:
+        return _ASSET_VERSIONS[name]
+    path = BASE_DIR / "assets" / name
+    _ASSET_VERSIONS[name] = hashlib.sha1(path.read_bytes()).hexdigest()[:10] if path.is_file() else "0"
+    return _ASSET_VERSIONS[name]
+
+def _abs_url(url: str) -> str:
+    if not url or url.startswith("http"):
+        return url
+    base = SITE_URL or request.host_url.rstrip("/")
+    return base + "/" + url.lstrip("/")
+
+def _head_html(page) -> str:
+    """Common <head> block: title, description, canonical, Open Graph, robots,
+    icons, font + core assets. One source of truth for every HTML page."""
+    site  = read_json("site.json") or {}
+    page  = page or {}
+    seo   = page.get("seo") or {}
+    title = page_title(page, site) if page else (site.get("name") or "Juan Rozo")
+    desc  = seo.get("metaDescription") or \
+        f"{site.get('name', 'Juan Rozo')} — {site.get('tagline', '')}. Melbourne based.".strip()
+    path  = page_path(page) if page.get("id") else request.path
+    og_image = seo.get("ogImage", "")
+    if not og_image and page.get("id"):
+        images  = {img["id"]: img for img in (read_json("images.json") or [])}
+        first   = next((images.get(r.get("imageId")) for r in page.get("gallery", []) if images.get(r.get("imageId"))), None)
+        og_image = (first or {}).get("url") or (site.get("about", {}).get("photo") if page.get("template") == "info" else "")
+    if not og_image:
+        og_image = next((p.get("seo", {}).get("ogImage") for p in (read_json("pages.json") or [])
+                         if p.get("isHome") and p.get("seo", {}).get("ogImage")), "")
+    noindex = (page and is_lab_page(page)) or seo.get("indexable") is False
+    e = lambda s: html.escape(str(s or ""), quote=True)
+    lines = [
+        f"<title>{e(title)}</title>",
+        f'<meta name="description" content="{e(desc)}" />',
+        f'<link rel="canonical" href="{e(_abs_url(path))}" />',
+        '<meta property="og:type" content="website" />',
+        f'<meta property="og:site_name" content="{e(site.get("name") or "Juan Rozo")}" />',
+        f'<meta property="og:title" content="{e(title)}" />',
+        f'<meta property="og:description" content="{e(desc)}" />',
+        f'<meta property="og:url" content="{e(_abs_url(path))}" />',
+        f'<meta property="og:image" content="{e(_abs_url(og_image))}" />' if og_image else "",
+        '<meta name="twitter:card" content="summary_large_image" />',
+        '<meta name="robots" content="noindex" />' if noindex else "",
+        '<meta name="theme-color" content="#ffffff" />',
+        f'<meta name="jr:page" content="{e(page.get("id"))}" />' if page.get("id") else "",
+        '<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32.png" />',
+        '<link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />',
+        '<link rel="preconnect" href="https://fonts.googleapis.com" />',
+        '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
+        '<link rel="preconnect" href="https://juanrozo.com" />',
+        '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;900&display=swap" />',
+        f'<link rel="stylesheet" href="/assets/core.css?v={_asset_version("core.css")}" />',
+        f'<script src="/assets/core.js?v={_asset_version("core.js")}"></script>',
+    ]
+    return "\n  ".join(l for l in lines if l)
+
+def _inject_head(content: str, page) -> str:
+    return content.replace("<!--core:head-->", _head_html(page), 1)
+
+def _html_response(content: str):
+    return Response(content, mimetype="text/html", headers={"Cache-Control": "no-cache"})
+
+def serve_html(html_path, page=None):
+    """Read an HTML file, inject the common <head> for `page` and return a
+    no-cache Response. Works reliably on Vercel (no streaming issues)."""
+    html_path = Path(html_path)
+    if page is None and html_path.stem != "index":
+        page = next((p for p in (read_json("pages.json") or []) if p.get("id") == html_path.stem), None)
+    content = html_path.read_text(encoding="utf-8")
+    return _html_response(_inject_head(content, page))
 
 @app.route("/<path:filename>")
 def serve_static(filename):
@@ -952,7 +1171,7 @@ def serve_static(filename):
     except Exception:
         abort(403)
     # Serve exact static file if it exists.
-    # Root-level .html files go through serve_html() so shared.css/js are injected.
+    # Root-level .html files go through serve_html() so the common <head> is injected.
     # Sub-directory files (admin/, data/, etc.) are served as-is.
     if path.is_file():
         if path.suffix == '.html' and path.parent == BASE_DIR.resolve():
@@ -967,18 +1186,48 @@ def serve_static(filename):
     page = next((p for p in pages if p.get("slug", p.get("id", "")) == slug), None)
     if page is None:
         page = next((p for p in pages if p.get("id", "") == slug), None)
+    if page is None and slug.startswith(LAB_PREFIX):
+        # /lab/<name> keeps working before data/migrate_ux_fix.py has moved the slugs
+        name = LAB_ALIASES.get(slug[len(LAB_PREFIX):], slug[len(LAB_PREFIX):])
+        page = next((p for p in pages if is_lab_page(p) and name in (p.get("id"), p.get("slug"))), None)
+        if page:
+            page = {**page, "slug": slug}
     if page:
         template = page.get("template", "")
         page_id  = page["id"]
-        if template in ("archive-standalone", "filmstrip", "elastic-grid"):
+        if template in STANDALONE_TEMPLATES:
             # Standalone pages have a physical .html file named after their id
             html_path = BASE_DIR / f"{page_id}.html"
             if html_path.is_file():
-                return serve_html(html_path)
+                return serve_html(html_path, page)
         else:
             # SPA pages — serve index.html; JS reads location.pathname to pick the right section
-            return serve_html(BASE_DIR / "index.html")
+            return serve_html(BASE_DIR / "index.html", page)
     abort(404)
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Redirects — vercel.json is the source of truth (edge on Vercel); mirrored
+#  here so local dev behaves the same.
+# ══════════════════════════════════════════════════════════════════════════════
+def _load_redirects():
+    try:
+        cfg = json.loads((BASE_DIR / "vercel.json").read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    out = []
+    for r in cfg.get("routes", []):
+        if r.get("status") in (301, 302, 308) and r.get("headers", {}).get("Location"):
+            out.append((re.compile("^" + r["src"] + "$"), r["headers"]["Location"], r["status"]))
+    return out
+
+_REDIRECTS = _load_redirects()
+
+@app.before_request
+def _apply_redirects():
+    for rx, location, status in _REDIRECTS:
+        if rx.match(request.path):
+            qs = request.query_string.decode()
+            return redirect(location + ("?" + qs if qs else ""), code=status)
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  One-time migration: fix ephemeral /uploads/ photo URLs → permanent /images/

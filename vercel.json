@@ -6,7 +6,23 @@
       "use": "@vercel/python"
     }
   ],
+  "images": {
+    "sizes": [128, 256, 640, 1080, 1600, 2048],
+    "remotePatterns": [
+      { "protocol": "https", "hostname": "juanrozo.com", "pathname": "/wp-content/uploads/**" }
+    ],
+    "formats": ["image/avif", "image/webp"],
+    "minimumCacheTTL": 2678400
+  },
   "routes": [
+    { "src": "/intro/?", "status": 301, "headers": { "Location": "/" } },
+    { "src": "/personal-v2/?", "status": 301, "headers": { "Location": "/personal" } },
+    { "src": "/(?:home|archive-filmstrip-v1)(?:\\.html)?/?", "status": 301, "headers": { "Location": "/lab/filmstrip" } },
+    { "src": "/(?:grid|archive)(?:\\.html)?/?", "status": 301, "headers": { "Location": "/lab/grid" } },
+    { "src": "/(?:grid-v2|elastic-grid-v1)(?:\\.html)?/?", "status": 301, "headers": { "Location": "/lab/grid-v2" } },
+    { "src": "/archive-intro-v1(?:\\.html)?/?", "status": 301, "headers": { "Location": "/lab/archive-intro-v1" } },
+    { "src": "/archive-personal-v1(?:\\.html)?/?", "status": 301, "headers": { "Location": "/lab/archive-personal-v1" } },
+    { "src": "/archive-intro-loader-v1(?:\\.html)?/?", "status": 301, "headers": { "Location": "/lab/archive-intro-loader-v1" } },
     { "src": "/(.*)", "dest": "server.py" }
   ]
 }
