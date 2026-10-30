@@ -2,286 +2,198 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Juan Rozo — Archive: Personal v1</title>
-  <link rel="icon" type="image/png" href="https://juanrozo.com/wp-content/uploads/2024/05/Artboard-2.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!--core:head-->
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@900&display=swap');
-    *, *::before, *::after { box-sizing: border-box; }
-    :root {
-      --font-display: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
-      --fw: 900;
-      --color-red: #ff3232;
-    }
-    html { scroll-behavior: smooth; }
     body {
-      margin: 0; padding: 0;
-      background: #fff;
+      margin: 0;
+      background: var(--color-paper);
+      color: var(--color-ink);
       overflow: hidden;
       font-family: var(--font-display);
-      font-weight: var(--fw);
+      font-weight: var(--fw-display);
       -webkit-font-smoothing: antialiased;
-      color: #0a0a0a;
     }
 
-    .archive-back    { display: none; }
-    .archive-version { display: none; }
-
-    /* Global header — logo top-left */
-    .site-logo {
-      position: fixed;
-      top: 21px; left: 24px;
-      z-index: 200;
-      
-      line-height: 0;
-      
-      text-decoration: none; cursor: pointer;
-      transition: opacity 0.3s ease;
-    }
-    .site-logo img { height: 40px; width: auto; display: block; }
-    .site-logo:hover { opacity: 0.5; }
-    body.menu-open .site-logo { opacity: 0; pointer-events: none; }
-    @media (max-width: 768px) {
-      .site-logo { top: max(12px, env(safe-area-inset-top, 12px)); left: 16px; }
-    }
-
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Personal v1 layout */
+    /* ── Layout: header · gallery · counter + thumbnails ───────── */
     .v1-personal {
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      width: 100%;
+      height: 100dvh;
+      padding-top: calc(var(--header-h) + var(--safe-top));
     }
-    .v1-personal-title-bar {
-      display: none;
-    }
+
     .v1-personal-scroll {
       flex: 1;
+      min-height: 0;
       display: flex;
+      align-items: center;
       gap: 16px;
+      padding: 0 var(--gutter);
       overflow-x: auto;
       overflow-y: hidden;
-      padding: 0 24px;
-      align-items: center;   /* vertically centre the fixed-height items */
-      cursor: grab;
+      overscroll-behavior-x: contain;
       scrollbar-width: none;
       user-select: none;
       -webkit-user-select: none;
     }
-    .v1-personal-scroll:active { cursor: grabbing; }
     .v1-personal-scroll::-webkit-scrollbar { display: none; }
+    html:not(.has-custom-cursor) .v1-personal-scroll { cursor: grab; }
+    html:not(.has-custom-cursor) .v1-personal-scroll.is-dragging { cursor: grabbing; }
 
-    /* Each item is sized by its natural aspect ratio at 50vh — no cropping */
+    /* Each photo keeps its ratio (--ar) and is never wider than the screen */
     .v1-personal-item {
       flex: 0 0 auto;
-      height: 50vh;
-      width: auto;
+      height: min(50vh, calc((100vw - 48px) / var(--ar, 1.5)));
+      aspect-ratio: var(--ar, 1.5);
+      background: var(--color-placeholder);
       opacity: 0;
-      transform: translateY(40px);
+      transform: translateY(24px);
+      transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out);
     }
-    .v1-personal-item.revealed {
-      opacity: 1;
-      transform: translateY(0);
-      transition: opacity 0.8s ease, transform 1s cubic-bezier(0.16, 1, 0.3, 1);
-    }
+    .v1-personal-item.revealed { opacity: 1; transform: none; background: transparent; }
     .v1-personal-item img {
-      height: 100%;
-      width: auto;
       display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
       pointer-events: none;
     }
 
-    /* Thumbnail nav — spans full page width */
-    .v1-personal-thumbs {
+    .v1-personal-bottom {
       flex-shrink: 0;
       display: flex;
-      gap: 4px;
-      padding: 0 0 12px;
-      overflow: hidden;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 12px var(--gutter) max(12px, var(--safe-bottom));
+    }
+    .v1-personal-bottom .gallery-counter { margin: 0; }
+
+    /* Thumbnails: 3:2 buttons aligned with the gallery padding */
+    .v1-personal-thumbs {
+      display: flex;
+      gap: 6px;
+      max-width: 100%;
+      padding-bottom: 6px;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
       scrollbar-width: none;
-      opacity: 0;
-      animation: slideUp 0.6s ease 1.2s forwards;
     }
     .v1-personal-thumbs::-webkit-scrollbar { display: none; }
     .v1-personal-thumb {
-      flex: 1 1 0%;
-      min-width: 0;
+      position: relative;
+      flex: 0 0 auto;
+      width: 72px;
       height: 48px;
-      overflow: hidden;
-      opacity: 0.4;
+      padding: 0;
+      border: 0;
+      background: var(--color-placeholder);
+      opacity: var(--dim);
       cursor: pointer;
-      transition: opacity 0.2s, transform 0.3s;
+      transition: opacity var(--dur-1) var(--ease-out);
     }
-    .v1-personal-thumb:hover,
-    .v1-personal-thumb.active { opacity: 1; }
-    .v1-personal-thumb:hover { transform: scale(1.1); }
-    .v1-personal-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
+    .v1-personal-thumb::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: -5px;
+      height: 2px;
+      background: var(--color-red);
+      transform: scaleX(0);
+      transition: transform var(--dur-2) var(--ease-out);
+    }
+    .v1-personal-thumb[aria-current="true"] { opacity: 1; }
+    .v1-personal-thumb[aria-current="true"]::after { transform: none; }
+    .v1-personal-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    @media (hover: hover) {
+      .v1-personal-thumb:hover { opacity: 1; }
     }
 
-    /* Menu overlay CSS → shared.css (injected by server.py) */
+    /* ── Phones (portrait): snap one photo at a time, counter replaces thumbnails ── */
+    @media (max-width: 767px) {
+      .v1-personal-scroll { scroll-snap-type: x mandatory; padding: 0 16px; gap: 12px; }
+      .v1-personal-item {
+        height: auto;
+        width: calc(100vw - 32px);
+        max-height: 72svh;
+        scroll-snap-align: center;
+        scroll-snap-stop: always;
+      }
+      .v1-personal-thumbs { display: none; }
+    }
+    /* ── Phones (landscape): photo fills the height, no thumbnails ── */
+    @media (orientation: landscape) and (max-height: 500px) {
+      .v1-personal-item { height: calc(100dvh - var(--header-h) - 48px); width: auto; max-height: none; }
+      .v1-personal-thumbs { display: none; }
+      .v1-personal-bottom { padding-top: 4px; }
+    }
   </style>
 </head>
 <body>
-  <!-- ── GLOBAL HEADER — logo top-left, menu icon top-right ──── -->
-  <a href="/" class="site-logo" id="site-logo" aria-label="Home"><img src="/images/logo.svg" alt="Juan Rozo" /></a>
-  <button class="menu-btn" id="menu-btn" aria-label="Menu">+</button>
-
-  <!-- ── SLIDE-UP MENU ──────────────────────────────────────────── -->
-  <div class="menu-overlay" id="menu-overlay">
-    <a href="/" class="menu-name" id="menu-name"><img src="/images/logo.svg" alt="Juan Rozo" /></a>
-    <nav class="menu-nav" id="menu-nav"></nav>
-    <div class="menu-footer" id="menu-footer"></div>
-    <button class="menu-close" id="menu-close" aria-label="Close menu">+</button>
-  </div>
-
-  <a href="archive.html" class="archive-back">&larr; Back to Archive</a>
-  <span class="archive-version">Personal v1</span>
-
-  <div class="v1-personal">
-    <div class="v1-personal-title-bar">
-      <h2 id="v1-personal-name"></h2>
+  <main id="main" class="v1-personal">
+    <h1 class="visually-hidden" id="v1-title">Personal</h1>
+    <div class="v1-personal-scroll" id="v1-personal-scroll" data-cursor="Drag"
+         role="region" aria-roledescription="gallery" aria-labelledby="v1-title" tabindex="0"></div>
+    <div class="v1-personal-bottom">
+      <p class="gallery-counter" id="v1-counter" aria-live="polite"></p>
+      <div class="v1-personal-thumbs" id="v1-personal-thumbs" role="group" aria-label="Photos"></div>
     </div>
-    <div class="v1-personal-scroll" id="v1-personal-scroll"></div>
-    <div class="v1-personal-thumbs" id="v1-personal-thumbs"></div>
-  </div>
+  </main>
 
-  <script src="config.js"></script>
+  <script src="/config.js"></script>
   <script>
-    // Use the page title from CONFIG.allPages — avoids duplicating the fixed site logo.
-    // Falls back to CONFIG.name only if allPages is unavailable.
-    var _thisPage = (CONFIG.allPages || []).find(function(p) { return p.id === 'archive-personal-v1'; });
-    document.getElementById('v1-personal-name').textContent = (_thisPage && _thisPage.title) ? _thisPage.title : 'Personal';
-
-    const scrollEl = document.getElementById('v1-personal-scroll');
+  (() => {
+    'use strict';
+    const scrollEl  = document.getElementById('v1-personal-scroll');
     const thumbsNav = document.getElementById('v1-personal-thumbs');
-    const personalItems = CONFIG.pageGalleries?.['personal-v2'] || [];
+    const counterEl = document.getElementById('v1-counter');
+    const items     = CONFIG.pageGalleries?.['personal-v2'] || [];
+    const total     = items.length;
+    const thumbs    = [];
 
-    personalItems.forEach((proj, idx) => {
-      // Main image
+    const page = (CONFIG.allPages || []).find(p => p.id === 'archive-personal-v1');
+    if (page && page.title) document.getElementById('v1-title').textContent = page.title;
+
+    items.forEach((proj, idx) => {
+      const ar = Core.ratio(proj) || 1.5;
       const div = document.createElement('div');
       div.className = 'v1-personal-item';
-      div.innerHTML = `<img src="${proj.image}?auto=format&w=600&q=80" alt="${proj.title}" loading="lazy" />`;
+      div.style.setProperty('--ar', ar);
+      div.innerHTML = `<img ${Core.imgAttrs(proj, { w: 1080, sizes: `(max-width: 767px) calc(100vw - 32px), ${Math.round(50 * ar)}vh`, high: idx === 0, eager: idx < 3, draggable: false })} />`;
       scrollEl.appendChild(div);
 
-      // Thumbnail nav
-      const thumb = document.createElement('div');
+      // Thumbnails: tiny dedicated variant (never the gallery file), skipped on Save-Data
+      const thumb = document.createElement('button');
+      thumb.type = 'button';
       thumb.className = 'v1-personal-thumb';
-      thumb.innerHTML = `<img src="${proj.image}?auto=format&w=100&q=60" alt="${proj.title}" />`;
-      thumb.addEventListener('click', () => {
-        div.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-      });
+      thumb.setAttribute('aria-label', `Photo ${idx + 1} of ${total}${proj.alt ? ': ' + proj.alt : ''}`);
+      if (!Core.saveData) thumb.innerHTML = `<img src="${Core.img(proj.url || proj.image, 128, 60)}" alt="" decoding="async" loading="lazy" />`;
+      thumb.addEventListener('click', () => gallery.goTo(idx));
       thumbsNav.appendChild(thumb);
+      thumbs.push(thumb);
     });
 
-    // ── Staggered entrance for gallery items ───────────────
-    const items = scrollEl.querySelectorAll('.v1-personal-item');
-    items.forEach((item, i) => {
-      const delay = 500 + i * 100 + (Math.random() * 60 - 30);
-      setTimeout(() => item.classList.add('revealed'), delay);
-    });
-
-    // ── Smooth wheel scroll (both axes → horizontal, with inertia) ───────────
-    (function initWheelScroll() {
-      let vel = 0;
-      let rafId = null;
-
-      function tick() {
-        if (Math.abs(vel) < 0.3) { vel = 0; rafId = null; return; }
-        scrollEl.scrollLeft += vel;
-        vel *= 0.90;
-        rafId = requestAnimationFrame(tick);
-      }
-
-      scrollEl.addEventListener('wheel', e => {
-        e.preventDefault();
-        // honour explicit horizontal scroll (trackpad two-finger); fall back to vertical
-        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-        vel += delta * 0.6;
-        if (!rafId) rafId = requestAnimationFrame(tick);
-      }, { passive: false });
-    })();
-
-    // ── Drag-to-scroll (document-level so fast drags don't break) ────────────
-    (function initDragScroll() {
-      const el = scrollEl;
-      let isDown = false;
-      let startX, scrollLeft0, velX = 0, lastX, lastTime, rafId;
-
-      el.addEventListener('mousedown', e => {
-        isDown = true;
-        el.style.cursor = 'grabbing';
-        startX    = e.clientX;
-        scrollLeft0 = el.scrollLeft;
-        velX      = 0;
-        lastX     = e.clientX;
-        lastTime  = Date.now();
-        cancelAnimationFrame(rafId);
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup',   onUp);
-      });
-
-      function onMove(e) {
-        if (!isDown) return;
-        e.preventDefault();
-        const dx = e.clientX - startX;
-        el.scrollLeft = scrollLeft0 - dx;
-
-        const now = Date.now();
-        const dt  = now - lastTime;
-        if (dt > 0) {
-          velX     = (e.clientX - lastX) / dt;
-          lastX    = e.clientX;
-          lastTime = now;
+    // One engine for wheel, drag, thumbnails and arrow keys (Core.hscroll)
+    const gallery = Core.hscroll(scrollEl, {
+      items: [...scrollEl.children],
+      onChange(i) {
+        counterEl.textContent = Core.counter(i, total);
+        thumbs.forEach((t, j) => t.setAttribute('aria-current', j === i ? 'true' : 'false'));
+        const t = thumbs[i];
+        if (t && thumbsNav.scrollWidth > thumbsNav.clientWidth) {
+          thumbsNav.scrollLeft = t.offsetLeft - thumbsNav.clientWidth / 2 + t.offsetWidth / 2;
         }
-      }
+      },
+    });
 
-      function onUp() {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup',   onUp);
-        if (!isDown) return;
-        isDown = false;
-        el.style.cursor = 'grab';
-        momentum();
-      }
-
-      function momentum() {
-        if (Math.abs(velX) < 0.01) return;
-        el.scrollLeft -= velX * 16;
-        velX *= 0.94;
-        rafId = requestAnimationFrame(momentum);
-      }
-    })();
-
-    // ── Highlight active thumbnail on scroll ─────────────────
-    (function initThumbHighlight() {
-      const items = scrollEl.querySelectorAll('.v1-personal-item');
-      const thumbs = thumbsNav.querySelectorAll('.v1-personal-thumb');
-
-      scrollEl.addEventListener('scroll', () => {
-        const scrollCenter = scrollEl.scrollLeft + scrollEl.clientWidth / 2;
-        let closest = 0, minDist = Infinity;
-        items.forEach((item, i) => {
-          const center = item.offsetLeft + item.offsetWidth / 2;
-          const dist = Math.abs(center - scrollCenter);
-          if (dist < minDist) { minDist = dist; closest = i; }
-        });
-        thumbs.forEach((t, i) => t.classList.toggle('active', i === closest));
-      });
-    })();
-
-    // Menu: handled by shared.js (injected by server.py)
+    // Each photo rises in once decoded (no fixed timers)
+    [...scrollEl.children].forEach((item, i) => {
+      if (Core.reduceMotion.matches) { item.classList.add('revealed'); return; }
+      Core.decoded(item.querySelector('img'), 1500)
+        .then(() => setTimeout(() => item.classList.add('revealed'), Math.min(i, 6) * 40));
+    });
+    Core.ready(Core.decoded(scrollEl.querySelector('img')));
+  })();
   </script>
 </body>
 </html>

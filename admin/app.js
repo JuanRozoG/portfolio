@@ -29,15 +29,11 @@ function templateOptions(selected) {
 
 /**
  * Resolve the live URL for a page record.
- * - archive-standalone pages live at /<id>.html (static standalone files)
- * - all other pages live inside index.html at /#<slug-or-id>
+ * Every page lives at /<slug> (home at /); archived experiments use lab/<name>.
  */
 function pagePreviewUrl(page) {
-  if (page.template === 'archive-standalone' || page.template === 'filmstrip' || page.template === 'elastic-grid') {
-    return `/${page.id}.html`;
-  }
-  // Main SPA pages: open root; hash is for informational clarity only
-  return '/';
+  if (page.isHome) return '/';
+  return `/${page.slug || page.id}`;
 }
 
 // ── Debug mode ───────────────────────────────────────────────────────────────
@@ -733,11 +729,11 @@ async function renderPageEditor(pageId) {
             <div class="field-group">
               <label class="field-label">Seconds per image</label>
               <input class="field-input" id="pc-slide-interval" type="number"
-                min="0.5" max="60" step="0.5"
-                value="${esc(String(_c.slideInterval || 2))}"
+                min="4" max="5" step="0.5"
+                value="${esc(String(_c.slideInterval || 4.5))}"
                 style="max-width:120px" />
               <span class="field-hint">
-                Tiempo que se muestra cada foto antes del cross-dissolve. Default: 2 s.
+                Tiempo que se muestra cada foto antes del cross-dissolve: entre 4 y 5 s (accesibilidad). Default: 4,5 s.
                 El gallery de fotos se gestiona en la sección Gallery de esta página.
               </span>
             </div>
@@ -959,8 +955,8 @@ async function renderPageEditor(pageId) {
     if (!slugVal) {
       showFieldError('pe-slug', 'El slug es obligatorio.');
       valid = false;
-    } else if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(slugVal)) {
-      showFieldError('pe-slug', 'Solo letras minúsculas, números y guiones. No puede empezar ni terminar en guión.');
+    } else if (!/^(lab\/)?([a-z0-9][a-z0-9-]*[a-z0-9]|[a-z0-9])$/.test(slugVal)) {
+      showFieldError('pe-slug', 'Solo letras minúsculas, números y guiones (prefijo opcional "lab/" para páginas de archivo). No puede empezar ni terminar en guión.');
       valid = false;
     }
     if (!valid) return;
@@ -993,7 +989,7 @@ async function renderPageEditor(pageId) {
         };
       } else if (page.template === 'filmstrip') {
         contentData = {
-          slideInterval: parseFloat(document.getElementById('pc-slide-interval')?.value) || 2,
+          slideInterval: Math.min(5, Math.max(4, parseFloat(document.getElementById('pc-slide-interval')?.value) || 4.5)),
         };
       }
 
@@ -1371,6 +1367,8 @@ async function renderImages() {
           <div class="library-tile-id">${esc(img.id)}</div>
           <input class="library-tile-input" placeholder="Alt text…" data-lib-alt="${esc(img.id)}" value="${esc(img.alt||'')}" title="Alt text" />
           <input class="library-tile-input" placeholder="Caption…"  data-lib-cap="${esc(img.id)}" value="${esc(img.caption||'')}" title="Caption" />
+          <input class="library-tile-input" placeholder="Client (commercial work)…" data-lib-client="${esc(img.id)}" value="${esc(img.client||'')}" title="Client / brand — shown in the photo viewer" />
+          <input class="library-tile-input" placeholder="Role (e.g. Photography, Art direction)…" data-lib-role="${esc(img.id)}" value="${esc(img.role||'')}" title="Your role — shown in the photo viewer" />
           <div style="margin:4px 0 6px;display:flex;flex-wrap:wrap;gap:3px">
             ${(img.categories||[]).map(c => `<span class="library-tile-cat">${esc(c)}</span>`).join('')}
           </div>
@@ -1460,8 +1458,10 @@ async function renderImages() {
         const id  = btn.dataset.libSave;
         const alt = document.querySelector(`[data-lib-alt="${id}"]`)?.value || '';
         const cap = document.querySelector(`[data-lib-cap="${id}"]`)?.value || '';
+        const client = document.querySelector(`[data-lib-client="${id}"]`)?.value || '';
+        const role   = document.querySelector(`[data-lib-role="${id}"]`)?.value || '';
         try {
-          await api.put(`/api/library/${id}`, { alt, caption: cap });
+          await api.put(`/api/library/${id}`, { alt, caption: cap, client, role });
           toast('Saved');
         } catch(e) { toast(e.message, 'error'); }
       });

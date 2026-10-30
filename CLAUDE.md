@@ -23,31 +23,31 @@ server.py         — Backend Flask
 admin/            — Panel de administración (app.js, index.html)
 images/           — Imágenes locales (logo.svg, about-photo.jpg, etc.)
 data/             — Scripts de seed para MongoDB
-archive-*.html    — Páginas standalone de archivo (no usan style.css, tienen <style> inline)
-shared.css        — Estilos compartidos
-shared.js         — JS compartido
-vercel.json       — Configuración de routing Vercel
+archive-*.html    — Páginas standalone de archivo (/lab/…, noindex; estilos propios inline)
+assets/core.css   — Tokens de diseño/movimiento, cabecera, menú, cursor, transiciones (TODAS las páginas)
+assets/core.js    — window.Core: img(), reduceMotion, menú, cursor, wipe, ready() (TODAS las páginas)
+assets/collage.js — Motor del collage de la home (y de /lab/archive-intro-loader-v1)
+vercel.json       — Routing Vercel, redirecciones 301 y Vercel Image Optimization
 ```
 
 ---
 
 ## Arquitectura CSS Importante
 
-### Elementos fixed (siempre encima del contenido)
-- `.site-logo` → `position: fixed; top: 21px; left: 24px; z-index: 200`
-  - La imagen del logo: `height: 40px; width: auto`
-- `.menu-btn` → `position: fixed; top: 14px; right: 24px; z-index: 200; font-size: 48px`
-- Altura combinada desde arriba: ~62px — cualquier contenido debe tener al menos 80px de padding-top para no quedar tapado
+### Cabecera común (core.js la construye en todas las páginas)
+- `<header class="site-header">` con `.site-logo` y `.menu-btn` (44×44); menú `#menu-overlay` (inert cuando está cerrado)
+- Altura: `var(--header-h)` (72px desktop / 64px móvil / 52px horizontal) — el contenido debe dejar ese espacio arriba
+- `<head>`: cada HTML lleva `<!--core:head-->`; server.py inyecta título, description, OG, canonical, fuentes y core.*
+- `body.hide-logo` oculta el logo de la cabecera (páginas que ya muestran el nombre como H1)
 
 ### Cache busting de CSS
 El link de style.css en `index.html` usa versión: `<link rel="stylesheet" href="style.css?v=N" />`
 **Incrementar `v=N` cada vez que se modifique style.css** para forzar recarga en browsers.
-Versión actual: **v=16**
+Versión actual: **v=18**. `/assets/*` se versiona solo (hash de contenido).
 
 ### Páginas de archivo (archive-*.html)
-Estas páginas NO importan `style.css`. Tienen su propio bloque `<style>` inline.
-Por eso, reglas como `.site-logo img { height: 40px }` deben estar explícitamente en el `<style>` de cada archivo.
-Archivos: `archive-filmstrip-v1.html`, `archive-intro-v1.html`, `archive-personal-v1.html`, `archive-intro-loader-v1.html`
+Viven en `/lab/<nombre>` (noindex, fuera del menú). Cargan core.css/core.js vía `<!--core:head-->`;
+su `<style>` inline solo contiene el layout propio de la página (nada de logo, menú ni cursor).
 
 ### Things page (masonry grid)
 - Sección: `id="page-things"`, clase `page-grid-section`
@@ -60,18 +60,15 @@ Archivos: `archive-filmstrip-v1.html`, `archive-intro-v1.html`, `archive-persona
 ## Diseño y UX
 
 ### Logo
-- Archivo: `/images/logo.svg`
-- Tamaño fijo: `height: 40px; width: auto`
-- En la SPA (`index.html`) el estilo viene de `style.css`
-- En páginas standalone el estilo debe estar inline
+- Archivo: `/images/logo.svg`; altura `var(--logo-h)` (core.css)
 
 ### Cursor personalizado
-- El sitio tiene cursor custom (`.cursor` element)
-- `.site-logo` usa `cursor: none` (no el cursor del sistema)
+- Solo con `(hover: hover) and (pointer: fine)` → `html.has-custom-cursor`
+- Estados por atributo: `data-cursor="View" | "Drag"` (etiqueta); links/botones → estado link
 
 ### Menu overlay
-- Clase `body.menu-open` oculta el logo: `.site-logo { opacity: 0; pointer-events: none }`
-- El `.menu-name` dentro del overlay también usa el logo SVG
+- Construido desde `CONFIG.menuPages` (las páginas con slug `lab/…` se excluyen)
+- `body.menu-open` oculta la cabecera; Escape cierra; foco atrapado mientras está abierto
 
 ---
 
