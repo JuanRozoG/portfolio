@@ -63,7 +63,7 @@
       }
     ],
     "id": "intro",
-    "inMenu": true,
+    "inMenu": false,
     "isHome": true,
     "menuLabel": "Home",
     "menuOrder": 0,
@@ -208,7 +208,8 @@
     "slug": "people",
     "status": "published",
     "template": "carousel",
-    "title": "People"
+    "title": "People",
+    "isHome": false
   },
   {
     "id": "things",
@@ -293,7 +294,8 @@
       "metaDescription": "Still life and product photography by Juan Rozo, Melbourne.",
       "ogImage": "",
       "indexable": true
-    }
+    },
+    "isHome": false
   },
   {
     "id": "personal-v2",
@@ -428,7 +430,8 @@
       "metaDescription": "Personal and street photography by Juan Rozo, Melbourne.",
       "ogImage": "",
       "indexable": true
-    }
+    },
+    "isHome": false
   },
   {
     "id": "info",
@@ -437,7 +440,7 @@
     "template": "info",
     "status": "published",
     "inMenu": true,
-    "menuLabel": "Info",
+    "menuLabel": "Info / Contact",
     "menuOrder": 4,
     "sections": [
       {
@@ -473,7 +476,8 @@
       "metaDescription": "About Juan Rozo — photographer and art-director based in Melbourne.",
       "ogImage": "",
       "indexable": true
-    }
+    },
+    "isHome": false
   },
   {
     "gallery": [
@@ -756,7 +760,7 @@
       "ogImage": "",
       "pageTitle": "Archive — Juan Rozo"
     },
-    "slug": "archive",
+    "slug": "lab/grid",
     "status": "published",
     "template": "archive",
     "title": "Archive"
@@ -822,7 +826,7 @@
       "ogImage": "",
       "pageTitle": "Juan Rozo — Archive: Intro v1"
     },
-    "slug": "archive-intro-v1",
+    "slug": "lab/archive-intro-v1",
     "status": "published",
     "template": "archive-standalone",
     "title": "Archive — Intro v1"
@@ -842,7 +846,7 @@
       "ogImage": "",
       "pageTitle": "Juan Rozo — Archive: Personal v1"
     },
-    "slug": "archive-personal-v1",
+    "slug": "lab/archive-personal-v1",
     "status": "published",
     "template": "archive-standalone",
     "title": "Archive — Personal v1"
@@ -862,7 +866,7 @@
       "ogImage": "",
       "pageTitle": "Juan Rozo — Archive: Intro Loader v1"
     },
-    "slug": "archive-intro-loader-v1",
+    "slug": "lab/archive-intro-loader-v1",
     "status": "published",
     "template": "archive-standalone",
     "title": "Archive — Intro Loader v1"
@@ -882,7 +886,7 @@
       "ogImage": "",
       "pageTitle": "Juan Rozo — Filmstrip"
     },
-    "slug": "archive-filmstrip-v1",
+    "slug": "lab/filmstrip",
     "status": "published",
     "template": "filmstrip",
     "title": "Archive — Filmstrip v1"
@@ -890,7 +894,7 @@
   {
     "id": "elastic-grid-v1",
     "title": "Elastic Grid",
-    "slug": "grid-v2",
+    "slug": "lab/grid-v2",
     "template": "elastic-grid",
     "status": "published",
     "inMenu": false,
@@ -963,6 +967,9 @@
       {
         "imageId": "img008"
       }
-    ]
+    ],
+    "seo": {
+      "indexable": false
+    }
   }
 ]
