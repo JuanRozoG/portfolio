@@ -55,14 +55,12 @@ Fases 0–8 hechas, un commit por fase. Capturas antes/después en `ux-screens/`
 5. **Justo después del deploy de producción**: `MONGO_URI=… python3 data/migrate_ux_fix.py --dry-run`, revisar y repetir sin `--dry-run`.
    MongoDB es compartido entre preview y producción: no migrar antes de que el código nuevo esté en producción.
 
-### Verificación local (sin optimizador de imágenes)
-| Página | Perf móvil / desktop | A11y | CLS | LCP móvil |
+### Lighthouse en el preview de Vercel (con `/_vercel/image`, tras la pasada de LCP)
+| Página | Perf móvil / desktop | A11y | LCP móvil | CLS |
 |---|---|---|---|---|
-| `/` | 71 / 95 | 100 | 0 / 0.04 | 5.3 s |
-| `/people` | 81 / 96 | 100 | 0 | 4.2 s |
-| `/things` | 87 / 93 | 100 | 0 | 3.4 s |
-| `/personal` | 72 / 92 | 100 | 0 | 5.1 s |
-| `/info` | 69 / 86* | 100 | 0 | 13.7 s* |
+| `/people` | 90 / 93 | 100 | 1.9 s | 0 |
+| `/things` | 99 / 99 | 100 | 1.6 s | 0 |
+| `/personal` | 91 / 92 | 100 | 2.1 s | 0 |
+| `/info` | 97 / 99 | 100 | 2.2 s | 0 / 0.01 |
 
-\* medido con el retrato en GitHub raw (2 MB); ya corregido a `/images/about-photo.jpg` con variantes.
-Performance/LCP hay que re-medirlos en el preview de Vercel.
+La home (`/`) se mide después de la migración: el preview comparte la MongoDB de producción, donde `/` aún es el Filmstrip.
