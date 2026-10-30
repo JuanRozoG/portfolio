@@ -87,7 +87,8 @@ img { max-width: 100%; height: auto; }
 }
 .ph > img { opacity: 0; transition: opacity var(--dur-2) var(--ease-out); }
 .ph.is-loaded { background: transparent; }
-.ph.is-loaded > img { opacity: 1; }
+.ph.is-loaded > img,
+.ph > img[fetchpriority="high"] { opacity: 1; }   /* the LCP photo paints as it arrives */
 
 /* ── Header (logo + menu button) ──────────────────────────── */
 .site-header {
